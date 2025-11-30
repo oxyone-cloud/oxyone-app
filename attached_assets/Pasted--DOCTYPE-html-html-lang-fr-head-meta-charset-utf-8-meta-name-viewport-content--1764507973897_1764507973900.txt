@@ -1,0 +1,260 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width,initial-scale=1" />
+<title>Simulation 3D Montage - Chambre Froide Amovible (SSCI) - Dimensions exactes</title>
+
+<style>
+:root{
+  --bg:#f4f6fb;
+  --card:#ffffff;
+  --accent:#2952b2;
+}
+*{box-sizing:border-box}
+body{font-family:Inter, Arial, sans-serif;background:var(--bg);display:flex;align-items:flex-start;justify-content:center;padding:28px}
+.container{width:920px;background:var(--card);border-radius:14px;padding:18px;box-shadow:0 8px 30px rgba(22,35,80,0.08)}
+.header{display:flex;align-items:center;justify-content:space-between;margin-bottom:12px}
+.title{font-size:18px;font-weight:700;color:#123063}
+.badge{font-size:13px;padding:6px 10px;border-radius:10px;background:linear-gradient(90deg,var(--accent),#4b78e6);color:white}
+.stage{display:flex;gap:20px}
+.visual{width:580px;padding:14px;border-radius:12px;background:linear-gradient(180deg,#eaf2ff,white);box-shadow:inset 0 1px 0 rgba(255,255,255,0.6)}
+.info{width:300px;padding:12px}
+.canvas3d{width:100%;height:520px;perspective:1400px;position:relative}
+.scene{width:100%;height:100%;margin:10px auto;position:relative;transform-style:preserve-3d;transition:transform 1s ease}
+/* shell and inner will be dynamically sized by JS to reflect exact dims */
+.face{position:absolute;backface-visibility:hidden;border:2px solid rgba(20,40,100,0.20);background:linear-gradient(180deg,#dbe8ff,#bdd6ff);box-shadow:0 6px 20px rgba(10,35,90,0.06);border-radius:6px}
+.inner .panel{position:absolute;background:linear-gradient(180deg,#ffffff,#eef6ff);border-radius:4px;border:1px solid rgba(0,0,0,0.06);box-shadow:inset 0 1px 0 rgba(255,255,255,0.6)}
+/* door */
+.door{position:absolute;background:linear-gradient(180deg,#fff,#f2f8ff);border:3px solid rgba(0,0,0,0.08);border-radius:6px;transform-origin:left center;transition:transform .9s cubic-bezier(.2,.9,.3,1);z-index:40;display:flex;align-items:flex-start;justify-content:center}
+.door.open{transform:rotateY(-95deg) translateX(12px)}
+.door .heightmark{position:absolute;left:6px;top:6px;font-size:12px;color:#234;opacity:0.9}
+/* exploded modifiers */
+.shell.exploded .face{transition:transform 0.9s cubic-bezier(.2,.9,.3,1)}
+.inner.exploded{transform:translateY(-12px) rotateX(6deg)}
+.specs{background:#fff;border-radius:10px;padding:12px;box-shadow:0 8px 24px rgba(18,36,86,0.06)}
+.specs h3{margin:0 0 8px 0;color:#123063;font-size:15px}
+.specs p{margin:6px 0;font-size:13px;color:#233}
+.controls{display:flex;gap:8px;margin-top:12px}
+.btn{flex:1;padding:10px;border-radius:8px;border:none;background:var(--accent);color:#fff;cursor:pointer;font-weight:600}
+.btn.secondary{background:#e6edf9;color:var(--accent)}
+.small{font-size:12px;padding:8px;border-radius:8px}
+.indicators{display:flex;flex-direction:column;gap:8px;margin-top:8px}
+.row{display:flex;justify-content:space-between;align-items:center}
+.label{font-weight:700;color:#123063}
+.value{font-weight:600;color:#1f3b7a}
+.footer{margin-top:12px;font-size:13px;color:#334;display:flex;justify-content:space-between}
+.note{font-size:12px;color:#556}
+</style>
+</head>
+
+<body>
+<div class="container">
+  <div class="header">
+    <div>
+      <div class="title">Simulation 3D – Montage (dimensions exactes)</div>
+      <div style="font-size:12px;color:#456;margin-top:6px">SSCI SOLUTION OF COLD · Dimensions internes exactes appliquées</div>
+    </div>
+    <div class="badge">Précision métrique</div>
+  </div>
+
+  <div class="stage">
+    <div class="visual">
+      <div class="canvas3d">
+        <div class="scene" id="scene" style="transform:rotateX(6deg) rotateY(-22deg) translateZ(0)">
+
+          <!-- shell container (will be sized by JS to reflect real dims + panel thickness) -->
+          <div id="shell" class="shell"></div>
+
+          <!-- inner box representing internal dims -->
+          <div id="inner" class="inner"></div>
+
+        </div>
+      </div>
+    </div>
+
+    <div class="info">
+      <div class="specs">
+        <h3>Fiche & Contrôles</h3>
+        <p><span class="label">Dimensions internes</span><br><span class="value">L 2,74 m × l 1,83 m × H 2,00 m — Volume 10 m³</span></p>
+        <p><span class="label">Épaisseur panneaux</span><br><span class="value">Panneaux : 80 mm · Porte : 60 mm</span></p>
+        <p><span class="label">Hauteur porte</span><br><span class="value">0.80 m</span></p>
+        <p><span class="label">Températures</span><br><span class="value">Ambiante 25 °C → Stockage +1 °C à +10 °C</span></p>
+        <p><span class="label">Charge admissible</span><br><span class="value">250 kg/m² → ≈ 1250 kg</span></p>
+
+        <div class="indicators">
+          <div class="row"><div class="label">Volume</div><div class="value">10 m³</div></div>
+          <div class="row"><div class="label">Panneaux</div><div class="value">80 mm</div></div>
+          <div class="row"><div class="label">Porte</div><div class="value">60 mm</div></div>
+          <div class="row"><div class="label">Temp. stockage</div><div class="value" id="tempVal">+4 °C</div></div>
+        </div>
+
+        <div class="controls">
+          <button class="btn" id="stepPrev">Étape précédente</button>
+          <button class="btn" id="stepNext">Étape suivante</button>
+        </div>
+
+        <div style="display:flex;gap:8px;margin-top:10px">
+          <button class="btn secondary small" id="explodeBtn">Vue éclatée</button>
+          <button class="btn secondary small" id="doorBtn">Ouvrir porte</button>
+        </div>
+
+      </div>
+
+      <div style="margin-top:12px" class="specs">
+        <h3>Étapes de montage</h3>
+        <p id="stepText">Étape 1: Positionnement des panneaux (coffrage)</p>
+        <div style="margin-top:8px;display:flex;gap:6px">
+          <button class="btn secondary small" id="autoPlay">Auto-play</button>
+          <button class="btn secondary small" id="resetBtn">Réinitialiser</button>
+        </div>
+      </div>
+
+      <div class="footer">
+        <div class="note">SSCI · Chambre froide positive</div>
+        <div style="font-weight:700;color:#123063">Volume réel: 10 m³</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+// Exact configuration (utilise tes valeurs)
+const config = {
+  internal: {L:2.74, W:1.83, H:2.00}, // meters
+  panelThickness_m: 0.080, // 80 mm
+  doorThickness_m: 0.060, // 60 mm
+  doorHeight_m: 0.80,
+  ambientTemp:25,
+  storageTempDefault:4,
+  storageRange:[1,10],
+  loadDensity_kg_m2:250
+}
+
+// We'll map real-world meters to pixels for display while preserving proportions.
+// Choose a scale so the largest internal dimension fits comfortably.
+const PIXELS_PER_M = 110; // 110 px = 1 m (adjust if needed)
+
+// Compute pixel sizes
+const innerPx = {
+  width: Math.round(config.internal.W * PIXELS_PER_M),
+  height: Math.round(config.internal.H * PIXELS_PER_M),
+  length: Math.round(config.internal.L * PIXELS_PER_M)
+};
+const panelPx = Math.round(config.panelThickness_m * PIXELS_PER_M);
+const doorPx = Math.round(config.doorHeight_m * PIXELS_PER_M);
+
+// Create shell and inner elements programmatically with precise dimensions
+const shell = document.getElementById('shell');
+const inner = document.getElementById('inner');
+
+function makeFace(className, w, h, styles = {}){
+  const el = document.createElement('div');
+  el.className = 'face ' + className;
+  el.style.width = w + 'px';
+  el.style.height = h + 'px';
+  Object.keys(styles).forEach(k=>el.style[k]=styles[k]);
+  return el;
+}
+
+function buildScene(){
+  // Clear
+  shell.innerHTML=''; inner.innerHTML='';
+
+  // Outer shell represents internal dims + 2*thickness (for visualizing panel thickness)
+  const totalWidth = innerPx.width + 2*panelPx;
+  const totalHeight = innerPx.height + 2*panelPx;
+  const totalLength = innerPx.length + 2*panelPx;
+
+  // Position shell centrally using absolute positioning and transforms
+  shell.style.width = totalLength + 'px';
+  shell.style.height = totalHeight + 'px';
+  shell.style.left = '50%'; shell.style.top = '60px'; shell.style.transform = 'translateX(-50%)';
+
+  // Front face (outer)
+  const front = makeFace('front', totalLength, totalHeight, {transform:`translateZ(${panelPx}px)`});
+  const back  = makeFace('back', totalLength, totalHeight, {transform:`rotateY(180deg) translateZ(${panelPx}px)`});
+  const left  = makeFace('left', panelPx, totalHeight, {transform:`rotateY(-90deg) translateZ(${(totalLength/2 - panelPx)}px)`, left: (-(panelPx))+'px'});
+  const right = makeFace('right', panelPx, totalHeight, {transform:`rotateY(90deg) translateZ(${(totalLength/2 - panelPx)}px)`, left: (totalLength)+'px'});
+  const top   = makeFace('top', totalLength, panelPx, {transform:`rotateX(90deg) translateZ(${(totalHeight/2 - panelPx)}px)`, top: (-(panelPx))+'px'});
+  const bottom= makeFace('bottom', totalLength, panelPx, {transform:`rotateX(-90deg) translateZ(${(totalHeight/2 - panelPx)}px)`, top: (totalHeight)+'px'});
+
+  shell.appendChild(front);
+  shell.appendChild(back);
+  shell.appendChild(left);
+  shell.appendChild(right);
+  shell.appendChild(top);
+  shell.appendChild(bottom);
+
+  // INNER - exact internal dimensions
+  inner.style.width = innerPx.length + 'px';
+  inner.style.height = innerPx.height + 'px';
+  inner.style.left = '50%'; inner.style.top = (60 + panelPx) + 'px';
+  inner.style.transform = 'translateX(-50%)';
+
+  const inFront = document.createElement('div'); inFront.className='panel in-front'; inFront.style.width = innerPx.length+'px'; inFront.style.height = innerPx.height+'px'; inFront.style.transform = `translateZ(${panelPx}px)`;
+  const inBack  = document.createElement('div'); inBack.className='panel in-back'; inBack.style.width = innerPx.length+'px'; inBack.style.height = innerPx.height+'px'; inBack.style.transform = `rotateY(180deg) translateZ(${panelPx}px)`;
+  const inLeft  = document.createElement('div'); inLeft.className='panel in-left'; inLeft.style.width = panelPx+'px'; inLeft.style.height = innerPx.height+'px'; inLeft.style.left = (-panelPx)+'px'; inLeft.style.transform = `rotateY(-90deg) translateZ(${(innerPx.length/2)}px)`;
+  const inRight = document.createElement('div'); inRight.className='panel in-right'; inRight.style.width = panelPx+'px'; inRight.style.height = innerPx.height+'px'; inRight.style.left = innerPx.length+'px'; inRight.style.transform = `rotateY(90deg) translateZ(${(innerPx.length/2)}px)`;
+  const inTop   = document.createElement('div'); inTop.className='panel in-top'; inTop.style.width = innerPx.length+'px'; inTop.style.height = panelPx+'px'; inTop.style.top = (-panelPx)+'px'; inTop.style.transform = `rotateX(90deg) translateZ(${(innerPx.height/2)}px)`;
+  const inBottom= document.createElement('div'); inBottom.className='panel in-bottom'; inBottom.style.width = innerPx.length+'px'; inBottom.style.height = panelPx+'px'; inBottom.style.top = innerPx.height+'px'; inBottom.style.transform = `rotateX(-90deg) translateZ(${(innerPx.height/2)}px)`;
+
+  inner.appendChild(inFront); inner.appendChild(inBack); inner.appendChild(inLeft); inner.appendChild(inRight); inner.appendChild(inTop); inner.appendChild(inBottom);
+
+  // Door: place on front inner face, right side, with exact height
+  const doorEl = document.createElement('div');
+  doorEl.className = 'door';
+  const doorWidthPx = Math.round((config.internal.L * PIXELS_PER_M) * 0.25); // proportional width ~25% of length
+  doorEl.style.width = doorWidthPx+'px';
+  doorEl.style.height = doorPx+'px';
+  // position relative to inner box
+  const innerLeft = (window.innerWidth/2) - (innerPx.length/2);
+  // We'll position by CSS within inner using absolute coords
+  doorEl.style.right = (panelPx + 26) + 'px';
+  doorEl.style.bottom = (panelPx + 20) + 'px';
+  doorEl.innerHTML = `<div class="heightmark">H: ${config.doorHeight_m.toFixed(2)} m</div>`;
+  inner.appendChild(doorEl);
+}
+
+// Steps and controls (same logic as before but adapted)
+const steps = [
+  "Étape 1 : Positionnement des panneaux (réception des modules)",
+  "Étape 2 : Montage des parois latérales et alignement",
+  "Étape 3 : Fixation du plancher et du toit",
+  "Étape 4 : Installation de la porte amovible (ép. 60 mm)",
+  "Étape 5 : Installation du groupe froid et tests électriques",
+  "Étape 6 : Test final, contrôle température & charge"
+];
+let step = 0; const stepText = document.getElementById('stepText');
+function applyStep(s){ step = s; stepText.innerText = steps[step]; document.getElementById('scene').style.transform='rotateX(6deg) rotateY(-22deg) translateZ(0)';
+  // Visual hints: exploded on step 1 only for demo
+  if(step===1){ document.getElementById('explodeBtn').classList.add('active'); }
+}
+
+// Buttons
+document.getElementById('stepNext').addEventListener('click', ()=>{ if(step<steps.length-1) applyStep(step+1); });
+document.getElementById('stepPrev').addEventListener('click', ()=>{ if(step>0) applyStep(step-1); });
+
+// Exploded
+let exploded=false; document.getElementById('explodeBtn').addEventListener('click', ()=>{ exploded=!exploded; if(exploded){ document.getElementById('shell').classList.add('exploded'); document.getElementById('inner').classList.add('exploded'); } else { document.getElementById('shell').classList.remove('exploded'); document.getElementById('inner').classList.remove('exploded'); } });
+
+// Door open
+let doorOpen=false; document.getElementById('doorBtn').addEventListener('click', ()=>{ doorOpen=!doorOpen; const d = document.querySelector('#inner .door'); if(doorOpen) d.classList.add('open'); else d.classList.remove('open'); });
+
+// Auto-play
+let autoplay=null; document.getElementById('autoPlay').addEventListener('click', ()=>{ if(autoplay){ clearInterval(autoplay); autoplay=null; document.getElementById('autoPlay').innerText='Auto-play'; return; } document.getElementById('autoPlay').innerText='Stop'; let i=0; applyStep(0); autoplay=setInterval(()=>{ i++; if(i>steps.length-1){ clearInterval(autoplay); autoplay=null; document.getElementById('autoPlay').innerText='Auto-play'; return; } applyStep(i); },1400); });
+
+document.getElementById('resetBtn').addEventListener('click', ()=>{ applyStep(0); document.getElementById('shell').classList.remove('exploded'); document.getElementById('inner').classList.remove('exploded'); const d=document.querySelector('#inner .door'); if(d) d.classList.remove('open'); });
+
+// Init
+buildScene(); applyStep(0);
+
+// Accessibility: expose computed sizes in console for verification
+console.log('Internal (m):',config.internal);
+console.log('Pixels per m:', PIXELS_PER_M);
+console.log('Inner px sizes:', innerPx);
+console.log('Panel px thickness:', panelPx, 'Door height px:', doorPx);
+
+</script>
+</body>
+</html>
