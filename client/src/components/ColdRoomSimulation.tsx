@@ -1,10 +1,6 @@
 import React, { useState, useMemo, useEffect } from 'react';
 import { CONFIG, PIXELS_PER_M, STEPS } from '@/lib/coldRoomConfig';
-import { motion, AnimatePresence } from 'framer-motion';
-import { ChevronLeft, ChevronRight, Maximize2, Minimize2, Play, RotateCcw, DoorOpen } from 'lucide-react';
-import { Button } from '@/components/ui/button';
-import { Card } from '@/components/ui/card';
-import { Badge } from '@/components/ui/badge';
+import { ChevronLeft, ChevronRight, Maximize2, Minimize2, Play, RotateCcw, DoorOpen, AlertTriangle } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
 export function ColdRoomSimulation() {
@@ -12,15 +8,16 @@ export function ColdRoomSimulation() {
   const [isExploded, setIsExploded] = useState(false);
   const [isDoorOpen, setIsDoorOpen] = useState(false);
   const [autoPlay, setAutoPlay] = useState(false);
+  const [currentTemp, setCurrentTemp] = useState(25);
 
   // Dimensions in pixels
   const dims = useMemo(() => ({
-    innerW: Math.round(CONFIG.internal.W * PIXELS_PER_M), // Width (Depth in 3D terms usually, but let's stick to snippet mapping)
-    innerH: Math.round(CONFIG.internal.H * PIXELS_PER_M), // Height
-    innerL: Math.round(CONFIG.internal.L * PIXELS_PER_M), // Length (Width in screen terms)
+    innerW: Math.round(CONFIG.internal.W * PIXELS_PER_M),
+    innerH: Math.round(CONFIG.internal.H * PIXELS_PER_M),
+    innerL: Math.round(CONFIG.internal.L * PIXELS_PER_M),
     panel: Math.round(CONFIG.panelThickness_m * PIXELS_PER_M),
     doorH: Math.round(CONFIG.doorHeight_m * PIXELS_PER_M),
-    doorW: Math.round((CONFIG.internal.L * PIXELS_PER_M) * 0.25) // ~25% of length
+    doorW: Math.round((CONFIG.internal.L * PIXELS_PER_M) * 0.25)
   }), []);
 
   // Auto-play logic
@@ -40,6 +37,21 @@ export function ColdRoomSimulation() {
     return () => clearInterval(interval);
   }, [autoPlay]);
 
+  // Simulate temperature cooling when step >= 4
+  useEffect(() => {
+    if (step >= 4) {
+      const interval = setInterval(() => {
+        setCurrentTemp(prev => {
+          if (prev <= 4) return 4;
+          return prev - 1;
+        });
+      }, 500);
+      return () => clearInterval(interval);
+    } else {
+      setCurrentTemp(25);
+    }
+  }, [step]);
+
   // Reset view on step change if needed, or trigger animations
   useEffect(() => {
     if (step === 0) {
@@ -50,43 +62,42 @@ export function ColdRoomSimulation() {
 
   const totalLength = dims.innerL + 2 * dims.panel;
   const totalHeight = dims.innerH + 2 * dims.panel;
-  const totalWidth = dims.innerW + 2 * dims.panel; // Depth
+  const totalWidth = dims.innerW + 2 * dims.panel;
 
-  // Face styles helper
+  // Face styles helper - Dark metallic look
   const faceStyle = (w: number, h: number, transform: string, isInner = false) => ({
     width: w,
     height: h,
     transform,
     position: 'absolute' as const,
-    border: isInner ? '1px solid rgba(0,0,0,0.06)' : '2px solid rgba(20,40,100,0.20)',
+    border: isInner ? '1px solid rgba(0,255,65,0.1)' : '2px solid rgba(0,255,65,0.15)',
     background: isInner 
-      ? 'linear-gradient(180deg,#ffffff,#eef6ff)' 
-      : 'linear-gradient(180deg,#dbe8ff,#bdd6ff)',
-    boxShadow: isInner ? 'inset 0 1px 0 rgba(255,255,255,0.6)' : '0 6px 20px rgba(10,35,90,0.06)',
+      ? 'linear-gradient(180deg,#1a1d1a,#0f1410)' 
+      : 'linear-gradient(180deg,#2a2a2a,#1a1a1a)',
+    boxShadow: isInner ? 'inset 0 2px 5px rgba(0,255,65,0.05)' : '0 6px 20px rgba(0,0,0,0.8), 0 0 20px rgba(0,255,65,0.1)',
     borderRadius: isInner ? '4px' : '6px',
     transition: 'transform 0.9s cubic-bezier(.2,.9,.3,1), opacity 0.5s ease',
     backfaceVisibility: 'hidden' as const,
   });
 
-  // Exploded view modifiers
   const explodeGap = isExploded ? 40 : 0;
 
-  // Step visibility logic (simplified for prototype)
-  // 0: Base, 1: Walls, 2: Roof/Floor, 3: Door, 4: Unit, 5: Final
   const showWalls = step >= 1;
   const showRoofFloor = step >= 2;
   const showDoor = step >= 3;
+  const isCooling = step >= 4;
 
   return (
-    <div className="flex flex-col lg:flex-row gap-6 items-start w-full max-w-[1000px] mx-auto p-6 bg-card rounded-xl shadow-2xl border border-border/50">
+    <div className="flex flex-col lg:flex-row gap-8 items-start w-full max-w-[1100px] mx-auto p-6 bg-[#34495e] rounded-lg shadow-2xl border-4 border-[#7f8c8d]"
+      style={{boxShadow: 'inset 2px 2px 5px rgba(255,255,255,0.1), 10px 10px 30px rgba(0,0,0,0.5)'}}>
       
       {/* LEFT: 3D Stage */}
-      <div className="flex-1 w-full min-h-[500px] bg-gradient-to-b from-secondary to-white rounded-xl border border-white/60 shadow-inner relative overflow-hidden perspective-scene">
+      <div className="flex-1 w-full min-h-[520px] screen-bg rounded-lg border-4 border-[#222] relative overflow-hidden perspective-scene">
         
         <div className="absolute top-4 left-4 z-10">
-           <Badge variant="outline" className="bg-white/80 backdrop-blur text-primary border-primary/20">
-             Vue 3D interactive
-           </Badge>
+           <div className="px-3 py-1 rounded bg-[#1a1d1a] border border-[#00ff41] text-[#00ff41] text-xs font-mono font-bold">
+             3D VIEW
+           </div>
         </div>
 
         {/* SCENE CONTAINER */}
@@ -106,7 +117,7 @@ export function ColdRoomSimulation() {
               {/* Floor (Outer) */}
               <div style={faceStyle(totalLength, totalWidth, `rotateX(90deg) translateZ(${totalHeight / 2 + explodeGap}px)`)} />
               
-              {/* Ceiling (Outer) - Only show if step >= 2 */}
+              {/* Ceiling (Outer) */}
               <div style={{
                  ...faceStyle(totalLength, totalWidth, `rotateX(90deg) translateZ(-${totalHeight / 2 + explodeGap}px)`),
                  opacity: showRoofFloor ? 1 : 0.1
@@ -118,14 +129,10 @@ export function ColdRoomSimulation() {
                  opacity: showWalls ? 1 : 0.1
               }} />
 
-              {/* Front Wall (Transparent-ish or open to see inside?) -> In the snippet it's a box. 
-                  Let's render it but maybe with lower opacity if we want to see inside, 
-                  or just render the Back/Left/Right/Top/Bottom. 
-                  Snippet renders ALL faces. 
-              */}
+              {/* Front Wall */}
               <div style={{
                  ...faceStyle(totalLength, totalHeight, `translateZ(${totalWidth / 2 + explodeGap}px)`),
-                 opacity: showWalls ? 0.1 : 0, // Keep front transparent to see inside
+                 opacity: showWalls ? 0.1 : 0,
                  pointerEvents: 'none'
               }} />
 
@@ -143,12 +150,11 @@ export function ColdRoomSimulation() {
 
               {/* INNER BOX (Internal Dimensions) */}
               <div className="preserve-3d" style={{ transform: isExploded ? 'translateY(-20px)' : 'none', transition: 'transform 1s' }}>
-                 {/* We render inner faces to give depth */}
-                 <div style={faceStyle(dims.innerL, dims.innerH, `translateZ(-${dims.innerW/2}px)`, true)} /> {/* Back */}
-                 <div style={faceStyle(dims.innerW, dims.innerH, `rotateY(-90deg) translateZ(${dims.innerL/2}px)`, true)} /> {/* Left */}
-                 <div style={faceStyle(dims.innerW, dims.innerH, `rotateY(90deg) translateZ(${dims.innerL/2}px)`, true)} /> {/* Right */}
-                 <div style={faceStyle(dims.innerL, dims.innerW, `rotateX(90deg) translateZ(${dims.innerH/2}px)`, true)} /> {/* Floor */}
-                 <div style={faceStyle(dims.innerL, dims.innerW, `rotateX(90deg) translateZ(-${dims.innerH/2}px)`, true)} /> {/* Ceiling */}
+                 <div style={faceStyle(dims.innerL, dims.innerH, `translateZ(-${dims.innerW/2}px)`, true)} />
+                 <div style={faceStyle(dims.innerW, dims.innerH, `rotateY(-90deg) translateZ(${dims.innerL/2}px)`, true)} />
+                 <div style={faceStyle(dims.innerW, dims.innerH, `rotateY(90deg) translateZ(${dims.innerL/2}px)`, true)} />
+                 <div style={faceStyle(dims.innerL, dims.innerW, `rotateX(90deg) translateZ(${dims.innerH/2}px)`, true)} />
+                 <div style={faceStyle(dims.innerL, dims.innerW, `rotateX(90deg) translateZ(-${dims.innerH/2}px)`, true)} />
               </div>
 
               {/* DOOR */}
@@ -158,18 +164,17 @@ export function ColdRoomSimulation() {
                   style={{
                     width: dims.doorW,
                     height: dims.doorH,
-                    // Position: Front face (translateZ width/2), Right side
                     transform: `translateZ(${dims.innerW / 2 + dims.panel + 2}px) translateX(${totalLength/2 - dims.doorW - 40}px) translateY(${totalHeight/2 - dims.doorH - dims.panel}px) ${isDoorOpen ? 'rotateY(-105deg)' : 'rotateY(0deg)'}`,
-                    background: 'linear-gradient(180deg,#fff,#f2f8ff)',
-                    border: '3px solid rgba(0,0,0,0.08)',
+                    background: 'linear-gradient(180deg,#2a2a2a,#1a1a1a)',
+                    border: '3px solid rgba(0,255,65,0.2)',
                     borderRadius: '6px',
-                    boxShadow: '2px 0 10px rgba(0,0,0,0.1)'
+                    boxShadow: '2px 0 15px rgba(0,255,65,0.2)'
                   }}
                 >
-                  <span className="text-[10px] font-mono text-slate-500 absolute top-1 left-2">
+                  <span className="text-[10px] font-mono text-[#00ff41] absolute top-1 left-2">
                     H: {CONFIG.doorHeight_m.toFixed(2)}m
                   </span>
-                  <div className="w-2 h-8 rounded-full bg-slate-200 absolute right-2 top-1/2 -translate-y-1/2 shadow-sm" />
+                  <div className="w-2 h-8 rounded-full bg-[#00ff41] absolute right-2 top-1/2 -translate-y-1/2 shadow-md" style={{boxShadow: '0 0 8px #00ff41'}} />
                 </div>
               )}
 
@@ -178,128 +183,129 @@ export function ColdRoomSimulation() {
         </div>
       </div>
 
-      {/* RIGHT: Controls & Info */}
-      <div className="w-full lg:w-[320px] flex flex-col gap-4">
+      {/* RIGHT: Industrial Control Panel */}
+      <div className="w-full lg:w-[340px] flex flex-col gap-4">
         
-        {/* Specs Card */}
-        <Card className="p-5 shadow-lg border-none bg-white/80 backdrop-blur">
-          <h3 className="text-primary font-bold text-base mb-4 flex items-center justify-between">
-            Fiche Technique
-            <div className="w-2 h-2 rounded-full bg-green-500 animate-pulse" />
-          </h3>
+        {/* Digital Temperature Display */}
+        <div className="screen-bg p-5 rounded-lg flex flex-col items-center border-2 border-[#222]">
+          <p className="text-xs text-[#7f8c8d] font-mono mb-3 uppercase tracking-wider">Temperature</p>
+          <div className="led-display text-6xl font-bold mb-2">{currentTemp.toFixed(0)}°C</div>
+          <p className="text-xs text-[#7f8c8d] font-mono">
+            {isCooling ? 'COOLING...' : 'STANDBY'}
+          </p>
+          <div className="flex gap-2 mt-4 w-full">
+            <div className="flex-1 flex flex-col items-center">
+              <div className={cn("led mb-2", isCooling && "on")} />
+              <span className="text-[10px] text-[#7f8c8d] font-mono">POWER</span>
+            </div>
+            <div className="flex-1 flex flex-col items-center">
+              <div className={cn("led mb-2", isCooling && "on")} />
+              <span className="text-[10px] text-[#7f8c8d] font-mono">COOL</span>
+            </div>
+            <div className="flex-1 flex flex-col items-center">
+              <div className={cn("led mb-2", isDoorOpen && "on")} style={{backgroundColor: isDoorOpen ? '#ff0000' : '#333'}} />
+              <span className="text-[10px] text-[#7f8c8d] font-mono">DOOR</span>
+            </div>
+          </div>
+        </div>
+
+        {/* Specs Panel */}
+        <div className="bg-[#34495e] p-5 rounded-lg border-2 border-[#7f8c8d] shadow-inner" style={{boxShadow: 'inset 2px 2px 5px rgba(0,0,0,0.3)'}}>
+          <h3 className="text-[#00ff41] font-bold text-base mb-3 font-mono uppercase tracking-wider">SPECIFICATIONS</h3>
           
-          <div className="space-y-3 text-sm">
-            <div className="group">
-              <p className="text-xs font-bold text-slate-500 uppercase tracking-wider mb-1">Dimensions Internes</p>
-              <p className="text-slate-800 font-medium bg-slate-50 p-2 rounded border border-slate-100">
-                L {CONFIG.internal.L}m × l {CONFIG.internal.W}m × H {CONFIG.internal.H}m
-              </p>
+          <div className="space-y-2 text-[#ecf0f1] text-sm font-mono">
+            <div className="flex justify-between text-xs">
+              <span className="text-[#7f8c8d]">INT. DIMENSIONS</span>
+              <span className="text-[#00ff41]">L{CONFIG.internal.L}m × W{CONFIG.internal.W}m × H{CONFIG.internal.H}m</span>
             </div>
-            
-            <div className="grid grid-cols-2 gap-3">
-               <div>
-                 <p className="text-xs font-bold text-slate-500 uppercase tracking-wider mb-1">Volume</p>
-                 <p className="text-slate-800 font-semibold">10 m³</p>
-               </div>
-               <div>
-                 <p className="text-xs font-bold text-slate-500 uppercase tracking-wider mb-1">Charge</p>
-                 <p className="text-slate-800 font-semibold">250 kg/m²</p>
-               </div>
+            <div className="h-px bg-[#7f8c8d] opacity-30" />
+            <div className="flex justify-between text-xs">
+              <span className="text-[#7f8c8d]">VOLUME</span>
+              <span className="text-[#00ff41]">10 M³</span>
             </div>
-
-            <div>
-               <p className="text-xs font-bold text-slate-500 uppercase tracking-wider mb-1">Température</p>
-               <div className="flex items-center gap-2 text-slate-700">
-                 <span className="px-2 py-0.5 bg-blue-50 text-blue-700 rounded text-xs font-bold">+1°C</span>
-                 <span>à</span>
-                 <span className="px-2 py-0.5 bg-blue-50 text-blue-700 rounded text-xs font-bold">+10°C</span>
-               </div>
+            <div className="flex justify-between text-xs">
+              <span className="text-[#7f8c8d]">CHARGE LIMIT</span>
+              <span className="text-[#00ff41]">250 KG/M²</span>
             </div>
-          </div>
-
-          {/* Live Indicators */}
-          <div className="mt-6 pt-4 border-t border-slate-100 space-y-2">
-            <div className="flex justify-between text-sm">
-              <span className="text-slate-500">Épaisseur Panneaux</span>
-              <span className="font-mono text-slate-700">80 mm</span>
+            <div className="flex justify-between text-xs">
+              <span className="text-[#7f8c8d]">TARGET TEMP.</span>
+              <span className="text-[#00ff41]">+1°C TO +10°C</span>
             </div>
-            <div className="flex justify-between text-sm">
-              <span className="text-slate-500">Épaisseur Porte</span>
-              <span className="font-mono text-slate-700">60 mm</span>
+            <div className="h-px bg-[#7f8c8d] opacity-30" />
+            <div className="flex justify-between text-xs">
+              <span className="text-[#7f8c8d]">PANEL THK.</span>
+              <span className="text-[#00ff41]">80 MM</span>
+            </div>
+            <div className="flex justify-between text-xs">
+              <span className="text-[#7f8c8d]">DOOR THK.</span>
+              <span className="text-[#00ff41]">60 MM</span>
             </div>
           </div>
-        </Card>
+        </div>
 
-        {/* Controls Card */}
-        <Card className="p-5 shadow-lg border-none bg-white/80 backdrop-blur flex-1 flex flex-col">
-          <h3 className="text-primary font-bold text-base mb-2">Contrôles</h3>
-          
-          <div className="mb-6 bg-slate-50 p-3 rounded-lg border border-slate-100 min-h-[80px] flex items-center">
-            <p className="text-sm text-slate-700 leading-relaxed">
-              <span className="font-bold text-primary block mb-1">{STEPS[step].label}</span>
-              {STEPS[step].description}
-            </p>
-          </div>
+        {/* Step Info */}
+        <div className="bg-[#2a2a2a] p-4 rounded-lg border-2 border-[#7f8c8d] min-h-[90px] flex flex-col">
+          <p className="text-[#00ff41] text-xs font-mono font-bold mb-2 uppercase">STEP {step + 1} / {STEPS.length}</p>
+          <p className="text-[#ecf0f1] text-xs leading-relaxed">
+            <span className="text-[#00ff41] font-mono block mb-1 text-[10px]">{STEPS[step].label}</span>
+            <span className="text-[#bdc3c7] text-[11px]">{STEPS[step].description}</span>
+          </p>
+        </div>
 
-          <div className="grid grid-cols-2 gap-2 mb-4">
-            <Button 
-              variant="default" 
-              className="w-full"
+        {/* Industrial Buttons */}
+        <div className="space-y-2">
+          <div className="grid grid-cols-2 gap-2">
+            <button 
+              className="industrial-btn w-full text-sm"
               onClick={() => setStep(s => Math.max(0, s - 1))}
               disabled={step === 0}
             >
-              <ChevronLeft className="w-4 h-4 mr-1" /> Précédent
-            </Button>
-            <Button 
-              variant="default" 
-              className="w-full"
+              ◀ PREV
+            </button>
+            <button 
+              className="industrial-btn w-full text-sm"
               onClick={() => setStep(s => Math.min(STEPS.length - 1, s + 1))}
               disabled={step === STEPS.length - 1}
             >
-              Suivant <ChevronRight className="w-4 h-4 ml-1" />
-            </Button>
+              NEXT ▶
+            </button>
           </div>
 
-          <div className="grid grid-cols-3 gap-2 mt-auto">
-            <Button 
-              variant="secondary" 
-              size="sm" 
-              className="h-auto py-2 flex flex-col gap-1 text-[10px]"
+          <div className="grid grid-cols-3 gap-2">
+            <button 
+              className={cn("industrial-btn text-xs flex-1", isExploded && "bg-[#00ff41] text-black")}
               onClick={() => setIsExploded(!isExploded)}
             >
-              {isExploded ? <Minimize2 className="w-4 h-4"/> : <Maximize2 className="w-4 h-4"/>}
-              {isExploded ? 'Grouper' : 'Éclater'}
-            </Button>
-            <Button 
-              variant="secondary" 
-              size="sm" 
-              className="h-auto py-2 flex flex-col gap-1 text-[10px]"
+              {isExploded ? '⊟' : '⊞'}
+            </button>
+            <button 
+              className={cn("industrial-btn text-xs flex-1", isDoorOpen && "bg-[#ff0000] text-white")}
               onClick={() => setIsDoorOpen(!isDoorOpen)}
               disabled={!showDoor}
             >
-              <DoorOpen className="w-4 h-4"/>
-              {isDoorOpen ? 'Fermer' : 'Ouvrir'}
-            </Button>
-            <Button 
-              variant="secondary" 
-              size="sm" 
-              className={cn("h-auto py-2 flex flex-col gap-1 text-[10px]", autoPlay && "bg-blue-100 text-blue-700 border-blue-200")}
+              🚪
+            </button>
+            <button 
+              className={cn("industrial-btn text-xs flex-1", autoPlay && "bg-[#00ff41] text-black")}
               onClick={() => setAutoPlay(!autoPlay)}
             >
-              <Play className="w-4 h-4"/>
-              {autoPlay ? 'Stop' : 'Auto'}
-            </Button>
+              ▶
+            </button>
           </div>
-          
-          <Button variant="ghost" size="sm" className="mt-2 text-xs text-slate-400 hover:text-slate-600" onClick={() => {
-            setStep(0);
-            setIsDoorOpen(false);
-            setIsExploded(false);
-            setAutoPlay(false);
-          }}>
-            <RotateCcw className="w-3 h-3 mr-1"/> Réinitialiser la simulation
-          </Button>
-        </Card>
+
+          <button 
+            className="industrial-btn w-full text-xs text-red-700"
+            onClick={() => {
+              setStep(0);
+              setIsDoorOpen(false);
+              setIsExploded(false);
+              setAutoPlay(false);
+              setCurrentTemp(25);
+            }}
+          >
+            ⟲ RESET
+          </button>
+        </div>
 
       </div>
     </div>

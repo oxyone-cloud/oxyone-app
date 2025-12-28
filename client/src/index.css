@@ -4,36 +4,36 @@
 @custom-variant dark (&:is(.dark *));
 
 @theme inline {
-  --color-background: hsl(220 33% 97%); /* #f4f6fb */
-  --color-foreground: hsl(222 47% 11%); /* #123063 */
+  --color-background: hsl(0 0% 7%); /* #121212 - Dark */
+  --color-foreground: hsl(0 0% 93%); /* #ecf0f1 - Light text */
   
-  --color-card: hsl(0 0% 100%);
-  --color-card-foreground: hsl(222 47% 11%);
+  --color-card: hsl(0 0% 20%); /* #333 - Dark card */
+  --color-card-foreground: hsl(0 0% 93%);
   
-  --color-popover: hsl(0 0% 100%);
-  --color-popover-foreground: hsl(222 47% 11%);
+  --color-popover: hsl(0 0% 20%);
+  --color-popover-foreground: hsl(0 0% 93%);
   
-  --color-primary: hsl(222 62% 43%); /* #2952b2 - accent from snippet */
-  --color-primary-foreground: hsl(0 0% 100%);
+  --color-primary: hsl(120 100% 25%); /* #00ff41 - LED Green */
+  --color-primary-foreground: hsl(0 0% 7%);
   
-  --color-secondary: hsl(218 50% 94%); /* #e6edf9 */
-  --color-secondary-foreground: hsl(222 62% 43%);
+  --color-secondary: hsl(0 0% 74%); /* #bdc3c7 - Metal gray */
+  --color-secondary-foreground: hsl(0 0% 7%);
   
-  --color-muted: hsl(210 40% 96.1%);
-  --color-muted-foreground: hsl(215.4 16.3% 46.9%);
+  --color-muted: hsl(0 0% 33%); /* #555 - Muted gray */
+  --color-muted-foreground: hsl(0 0% 70%);
   
-  --color-accent: hsl(218 50% 94%);
-  --color-accent-foreground: hsl(222 47% 11%);
+  --color-accent: hsl(120 100% 25%); /* #00ff41 - LED Green accent */
+  --color-accent-foreground: hsl(0 0% 7%);
   
-  --color-destructive: hsl(0 84.2% 60.2%);
-  --color-destructive-foreground: hsl(210 40% 98%);
+  --color-destructive: hsl(0 100% 50%); /* #ff0000 - Red for emergency */
+  --color-destructive-foreground: hsl(0 0% 100%);
 
-  --color-border: hsl(214.3 31.8% 91.4%);
-  --color-input: hsl(214.3 31.8% 91.4%);
-  --color-ring: hsl(222 62% 43%);
+  --color-border: hsl(0 0% 25%); /* #404040 */
+  --color-input: hsl(0 0% 15%);
+  --color-ring: hsl(120 100% 25%);
 
-  --radius-sm: 0.5rem;
-  --radius-md: 0.75rem;
+  --radius-sm: 0.25rem;
+  --radius-md: 0.5rem;
   --radius-lg: 1rem;
 }
 
@@ -43,6 +43,86 @@
   }
   body {
     @apply font-sans antialiased bg-background text-foreground;
+  }
+}
+
+/* Industrial/Cyberpunk Styles */
+@layer components {
+  .metal-bg {
+    background: linear-gradient(145deg, #2c3e50, #000000);
+  }
+
+  .screen-bg {
+    background-color: #1a1d1a;
+    border: 8px solid #222;
+    box-shadow: inset 0 0 15px black;
+  }
+
+  .led-display {
+    font-family: 'Courier New', monospace;
+    color: #00ff41;
+    text-shadow: 0 0 10px rgba(0, 255, 65, 0.5);
+  }
+
+  .led {
+    width: 12px;
+    height: 12px;
+    border-radius: 50%;
+    background-color: #333;
+  }
+
+  .led.on {
+    background-color: #00ff41;
+    box-shadow: 0 0 8px #00ff41;
+  }
+
+  .industrial-btn {
+    background: #bdc3c7;
+    border: none;
+    padding: 10px 20px;
+    font-weight: bold;
+    border-radius: 4px;
+    box-shadow: 0 4px #7f8c8d;
+    cursor: pointer;
+    transition: all 0.1s;
+  }
+
+  .industrial-btn:hover:not(:disabled) {
+    transform: translateY(-2px);
+    box-shadow: 0 6px #7f8c8d;
+  }
+
+  .industrial-btn:active:not(:disabled) {
+    box-shadow: 0 0px #7f8c8d;
+    transform: translateY(4px);
+  }
+
+  .industrial-btn:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+  }
+
+  .emergency-stop {
+    background-color: #c0392b;
+    color: white;
+    border: 3px solid #7f231a;
+    padding: 15px;
+    font-weight: bold;
+    border-radius: 50%;
+    cursor: pointer;
+    width: 60px;
+    height: 60px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 10px;
+    box-shadow: 0 4px #7f231a;
+    transition: all 0.1s;
+  }
+
+  .emergency-stop:active {
+    box-shadow: 0 0px #7f231a;
+    transform: translateY(4px);
   }
 }
 

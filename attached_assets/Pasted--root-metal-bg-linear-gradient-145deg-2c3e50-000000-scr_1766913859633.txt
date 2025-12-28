@@ -1,0 +1,102 @@
+:root {
+    --metal-bg: linear-gradient(145deg, #2c3e50, #000000);
+    --screen-bg: #1a1d1a;
+    --led-green: #00ff41;
+    --led-red: #ff0000;
+}
+
+body {
+    background-color: #121212;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    height: 100vh;
+    margin: 0;
+    font-family: 'Segoe UI', sans-serif;
+}
+
+/* Le boîtier métallique */
+.cold-room-panel {
+    background: #34495e;
+    padding: 30px;
+    border-radius: 10px;
+    border: 4px solid #7f8c8d;
+    box-shadow: inset 2px 2px 5px rgba(255,255,255,0.1), 
+                10px 10px 30px rgba(0,0,0,0.5);
+    width: 400px;
+    text-align: center;
+}
+
+.panel-header h1 {
+    color: #ecf0f1;
+    font-size: 0.9rem;
+    letter-spacing: 2px;
+    margin-bottom: 20px;
+}
+
+/* L'écran digital (comme un vrai thermostat) */
+.digital-screen {
+    background-color: var(--screen-bg);
+    border: 8px solid #222;
+    padding: 20px;
+    border-radius: 5px;
+    box-shadow: inset 0 0 15px black;
+    margin-bottom: 25px;
+}
+
+.screen-label {
+    color: #4a4a4a;
+    font-size: 0.7rem;
+    font-weight: bold;
+}
+
+.temperature-display {
+    font-family: 'Orbitron', sans-serif;
+    color: var(--led-green);
+    font-size: 3.5rem;
+    text-shadow: 0 0 10px rgba(0, 255, 65, 0.5);
+}
+
+.unit { font-size: 1.5rem; margin-left: 5px; }
+
+/* Les voyants LED */
+.led {
+    width: 12px;
+    height: 12px;
+    border-radius: 50%;
+    background-color: #333;
+    margin: 0 auto 5px;
+}
+
+.led.green.on {
+    background-color: var(--led-green);
+    box-shadow: 0 0 8px var(--led-green);
+}
+
+/* Boutons Industriels */
+.industrial-btn {
+    background: #bdc3c7;
+    border: none;
+    padding: 10px 20px;
+    margin: 5px;
+    font-weight: bold;
+    border-radius: 4px;
+    box-shadow: 0 4px #7f8c8d;
+    cursor: pointer;
+}
+
+.industrial-btn:active {
+    box-shadow: 0 0px #7f8c8d;
+    transform: translateY(4px);
+}
+
+.emergency-stop {
+    background-color: #c0392b;
+    color: white;
+    border: 3px solid #7f231a;
+    padding: 15px;
+    margin-top: 20px;
+    font-weight: bold;
+    border-radius: 50%; /* Bouton champignon */
+    cursor: pointer;
+}
