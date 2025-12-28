@@ -1,27 +1,16 @@
-import React, { useState, useMemo, useEffect } from 'react';
-import { CONFIG, PIXELS_PER_M, STEPS } from '@/lib/coldRoomConfig';
+import React, { useState, useEffect } from 'react';
+import { CONFIG, STEPS } from '@/lib/coldRoomConfig';
+import { ThreeJsViewer } from '@/components/ThreeJsViewer';
 import { cn } from '@/lib/utils';
 
 export function ColdRoomSimulation() {
   const [step, setStep] = useState(0);
-  const [isExploded, setIsExploded] = useState(false);
-  const [isDoorOpen, setIsDoorOpen] = useState(false);
   const [autoPlay, setAutoPlay] = useState(false);
   const [currentTemp, setCurrentTemp] = useState(-18.4);
   const [setpointTemp, setSetpointTemp] = useState(4);
   const [humidity, setHumidity] = useState(42);
   const [isRunning, setIsRunning] = useState(true);
   const [hasAlarm, setHasAlarm] = useState(false);
-
-  // Dimensions in pixels
-  const dims = useMemo(() => ({
-    innerW: Math.round(CONFIG.internal.W * PIXELS_PER_M),
-    innerH: Math.round(CONFIG.internal.H * PIXELS_PER_M),
-    innerL: Math.round(CONFIG.internal.L * PIXELS_PER_M),
-    panel: Math.round(CONFIG.panelThickness_m * PIXELS_PER_M),
-    doorH: Math.round(CONFIG.doorHeight_m * PIXELS_PER_M),
-    doorW: Math.round((CONFIG.internal.L * PIXELS_PER_M) * 0.25)
-  }), []);
 
   // Auto-play logic
   useEffect(() => {
@@ -57,137 +46,21 @@ export function ColdRoomSimulation() {
     }
   }, [step, setpointTemp]);
 
-  // Reset view on step change if needed
-  useEffect(() => {
-    if (step === 0) {
-      setIsExploded(true);
-      setTimeout(() => setIsExploded(false), 1500);
-    }
-  }, [step]);
-
-  const totalLength = dims.innerL + 2 * dims.panel;
-  const totalHeight = dims.innerH + 2 * dims.panel;
-  const totalWidth = dims.innerW + 2 * dims.panel;
-
-  // Light theme face styles
-  const faceStyle = (w: number, h: number, transform: string, isInner = false) => ({
-    width: w,
-    height: h,
-    transform,
-    position: 'absolute' as const,
-    border: isInner ? '1px solid rgba(52,73,94,0.2)' : '2px solid rgba(52,73,94,0.15)',
-    background: isInner 
-      ? 'linear-gradient(180deg,#f5f7fa,#ecf1f5)' 
-      : 'linear-gradient(180deg,#e8eef5,#dce4ed)',
-    boxShadow: isInner ? 'inset 0 2px 4px rgba(0,0,0,0.05)' : '0 4px 15px rgba(0,0,0,0.08), 0 0 10px rgba(52,149,235,0.05)',
-    borderRadius: isInner ? '4px' : '6px',
-    transition: 'transform 0.9s cubic-bezier(.2,.9,.3,1), opacity 0.5s ease',
-    backfaceVisibility: 'hidden' as const,
-  });
-
-  const explodeGap = isExploded ? 40 : 0;
-  const showWalls = step >= 1;
-  const showRoofFloor = step >= 2;
-  const showDoor = step >= 3;
-
   return (
-    <div className="flex flex-col lg:flex-row gap-8 items-start w-full max-w-[1100px] mx-auto p-6 bg-white rounded-2xl border border-[#d1d9e6]"
-      style={{boxShadow: '10px 10px 20px #ced4da, -10px -10px 20px #ffffff'}}>
+    <div className="flex flex-col lg:flex-row gap-8 items-start w-full max-w-7xl mx-auto h-screen lg:h-[600px]">
       
       {/* LEFT: 3D Stage */}
-      <div className="flex-1 w-full min-h-[520px] screen-bg rounded-xl border-4 relative overflow-hidden perspective-scene">
-        
-        <div className="absolute top-4 left-4 z-10">
-           <div className="px-3 py-1 rounded bg-white border border-[#b2dfdb] text-[#264653] text-xs font-mono font-bold" style={{boxShadow: '2px 2px 4px rgba(0,0,0,0.08)'}}>
-             3D VIEW
-           </div>
+      <div className="flex-1 w-full h-full bg-[#e1e5ea] rounded-xl border border-[#d1d9e6] overflow-hidden shadow-lg">
+        <div className="absolute top-4 left-4 z-10 bg-white/90 px-3 py-2 rounded-lg border border-[#ccc] text-xs font-mono">
+          <strong>Modèle CR-274</strong><br />
+          Dim: 2.74m × 1.83m × 2.00m<br />
+          <small className="text-[#666]">Utilisez la souris pour pivoter / zoomer</small>
         </div>
-
-        {/* SCENE CONTAINER */}
-        <div 
-          className="w-full h-full relative preserve-3d transition-transform duration-1000 ease-in-out"
-          style={{ 
-            transform: 'rotateX(10deg) rotateY(-25deg) translateZ(0) scale(0.85)',
-            transformOrigin: 'center center'
-          }}
-        >
-          {/* CENTER POINT */}
-          <div className="absolute top-1/2 left-1/2 preserve-3d" style={{ transform: 'translate(-50%, -50%)' }}>
-            
-            {/* OUTER SHELL (Structure) */}
-            <div className={cn("relative preserve-3d transition-all duration-1000", isExploded ? "scale-95" : "")}>
-              
-              {/* Floor (Outer) */}
-              <div style={faceStyle(totalLength, totalWidth, `rotateX(90deg) translateZ(${totalHeight / 2 + explodeGap}px)`)} />
-              
-              {/* Ceiling (Outer) */}
-              <div style={{
-                 ...faceStyle(totalLength, totalWidth, `rotateX(90deg) translateZ(-${totalHeight / 2 + explodeGap}px)`),
-                 opacity: showRoofFloor ? 1 : 0.1
-              }} />
-
-              {/* Back Wall */}
-              <div style={{
-                 ...faceStyle(totalLength, totalHeight, `translateZ(-${totalWidth / 2 + explodeGap}px)`),
-                 opacity: showWalls ? 1 : 0.1
-              }} />
-
-              {/* Front Wall */}
-              <div style={{
-                 ...faceStyle(totalLength, totalHeight, `translateZ(${totalWidth / 2 + explodeGap}px)`),
-                 opacity: showWalls ? 0.1 : 0,
-                 pointerEvents: 'none'
-              }} />
-
-              {/* Left Wall */}
-              <div style={{
-                 ...faceStyle(totalWidth, totalHeight, `rotateY(-90deg) translateZ(${totalLength / 2 + explodeGap}px)`),
-                 opacity: showWalls ? 1 : 0.1
-              }} />
-
-              {/* Right Wall */}
-              <div style={{
-                 ...faceStyle(totalWidth, totalHeight, `rotateY(90deg) translateZ(${totalLength / 2 + explodeGap}px)`),
-                 opacity: showWalls ? 1 : 0.1
-              }} />
-
-              {/* INNER BOX (Internal Dimensions) */}
-              <div className="preserve-3d" style={{ transform: isExploded ? 'translateY(-20px)' : 'none', transition: 'transform 1s' }}>
-                 <div style={faceStyle(dims.innerL, dims.innerH, `translateZ(-${dims.innerW/2}px)`, true)} />
-                 <div style={faceStyle(dims.innerW, dims.innerH, `rotateY(-90deg) translateZ(${dims.innerL/2}px)`, true)} />
-                 <div style={faceStyle(dims.innerW, dims.innerH, `rotateY(90deg) translateZ(${dims.innerL/2}px)`, true)} />
-                 <div style={faceStyle(dims.innerL, dims.innerW, `rotateX(90deg) translateZ(${dims.innerH/2}px)`, true)} />
-                 <div style={faceStyle(dims.innerL, dims.innerW, `rotateX(90deg) translateZ(-${dims.innerH/2}px)`, true)} />
-              </div>
-
-              {/* DOOR */}
-              {showDoor && (
-                <div 
-                  className="absolute z-20 flex items-center justify-center transition-transform duration-1000 origin-left"
-                  style={{
-                    width: dims.doorW,
-                    height: dims.doorH,
-                    transform: `translateZ(${dims.innerW / 2 + dims.panel + 2}px) translateX(${totalLength/2 - dims.doorW - 40}px) translateY(${totalHeight/2 - dims.doorH - dims.panel}px) ${isDoorOpen ? 'rotateY(-105deg)' : 'rotateY(0deg)'}`,
-                    background: 'linear-gradient(180deg,#f5f7fa,#ecf1f5)',
-                    border: '3px solid rgba(52,149,235,0.2)',
-                    borderRadius: '6px',
-                    boxShadow: '2px 0 10px rgba(52,149,235,0.1)'
-                  }}
-                >
-                  <span className="text-[10px] font-mono text-[#264653] absolute top-1 left-2">
-                    H: {CONFIG.doorHeight_m.toFixed(2)}m
-                  </span>
-                  <div className="w-2 h-8 rounded-full bg-[#3498db] absolute right-2 top-1/2 -translate-y-1/2 shadow-sm" style={{boxShadow: '0 0 6px rgba(52,149,235,0.3)'}} />
-                </div>
-              )}
-
-            </div>
-          </div>
-        </div>
+        <ThreeJsViewer step={step} />
       </div>
 
-      {/* RIGHT: Industrial Control Panel */}
-      <div className="w-full lg:w-[360px] flex flex-col gap-4">
+      {/* RIGHT: Control Panel */}
+      <div className="w-full lg:w-[360px] flex flex-col gap-4 h-full lg:h-auto overflow-y-auto">
         
         {/* Header with Title and Status Lights */}
         <div className="neomorph-box p-4 rounded-xl">
@@ -261,49 +134,28 @@ export function ColdRoomSimulation() {
             </button>
           </div>
 
-          {/* View Controls */}
-          <div className="grid grid-cols-3 gap-2">
-            <button 
-              className={cn("industrial-btn rounded-lg text-xs font-bold transition-all", isExploded && "bg-[#b2dfdb] text-[#264653] shadow-inset")}
-              onClick={() => setIsExploded(!isExploded)}
-              title="Exploded view"
-            >
-              ⊟
-            </button>
-            <button 
-              className={cn("industrial-btn rounded-lg text-xs font-bold transition-all", isDoorOpen && "bg-[#ff9999] text-white")}
-              onClick={() => setIsDoorOpen(!isDoorOpen)}
-              disabled={!showDoor}
-              title="Door"
-            >
-              🚪
-            </button>
+          {/* Auto Play and Reset */}
+          <div className="grid grid-cols-2 gap-2">
             <button 
               className={cn("industrial-btn rounded-lg text-xs font-bold transition-all", autoPlay && "bg-[#b2dfdb] text-[#264653]")}
               onClick={() => setAutoPlay(!autoPlay)}
               title="Auto-play"
             >
-              ▶
+              ▶ AUTO
+            </button>
+            <button 
+              className="industrial-btn rounded-lg text-xs font-bold"
+              onClick={() => {
+                setStep(0);
+                setAutoPlay(false);
+                setCurrentTemp(-18.4);
+                setSetpointTemp(4);
+                setHasAlarm(false);
+              }}
+            >
+              ⟲ RESET
             </button>
           </div>
-        </div>
-
-        {/* Emergency Stop */}
-        <div className="flex justify-center pt-2">
-          <button 
-            className="emergency-stop"
-            onClick={() => {
-              setStep(0);
-              setIsDoorOpen(false);
-              setIsExploded(false);
-              setAutoPlay(false);
-              setCurrentTemp(-18.4);
-              setSetpointTemp(4);
-              setHasAlarm(false);
-            }}
-          >
-            ⏹ RESET
-          </button>
         </div>
 
       </div>

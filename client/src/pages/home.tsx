@@ -2,9 +2,9 @@ import { ColdRoomSimulation } from '@/components/ColdRoomSimulation';
 
 export default function Home() {
   return (
-    <div className="min-h-screen w-full bg-[#e9ecef] flex flex-col items-center py-10 px-4">
+    <div className="min-h-screen w-full bg-[#e9ecef] flex flex-col items-center p-6">
       
-      <header className="w-full max-w-[1100px] mb-8 flex items-center justify-between">
+      <header className="w-full max-w-7xl mb-6 flex items-center justify-between">
         <div>
           <h1 className="text-3xl font-bold text-[#7f8c8d] border-b-2 border-[#3498db] pb-2">SIMULATION 3D – MONTAGE</h1>
           <p className="text-sm text-[#34495e] mt-2">Dimensions internes exactes appliquées</p>
@@ -18,7 +18,7 @@ export default function Home() {
         <ColdRoomSimulation />
       </main>
 
-      <footer className="w-full max-w-[1100px] mt-8 flex justify-between text-xs text-[#7f8c8d] border-t border-[#d1d9e6] pt-4">
+      <footer className="w-full max-w-7xl mt-8 flex justify-between text-xs text-[#7f8c8d] border-t border-[#d1d9e6] pt-4">
         <div>SSCI · CHAMBRE FROIDE POSITIVE</div>
         <div className="font-bold text-[#34495e]">VOLUME RÉEL: 10 M³</div>
       </footer>
