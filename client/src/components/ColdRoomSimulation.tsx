@@ -1,6 +1,5 @@
 import React, { useState, useMemo, useEffect } from 'react';
 import { CONFIG, PIXELS_PER_M, STEPS } from '@/lib/coldRoomConfig';
-import { ChevronLeft, ChevronRight, Maximize2, Minimize2, Play, RotateCcw, DoorOpen, AlertTriangle } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
 export function ColdRoomSimulation() {
@@ -8,7 +7,11 @@ export function ColdRoomSimulation() {
   const [isExploded, setIsExploded] = useState(false);
   const [isDoorOpen, setIsDoorOpen] = useState(false);
   const [autoPlay, setAutoPlay] = useState(false);
-  const [currentTemp, setCurrentTemp] = useState(25);
+  const [currentTemp, setCurrentTemp] = useState(-18.4);
+  const [setpointTemp, setSetpointTemp] = useState(4);
+  const [humidity, setHumidity] = useState(42);
+  const [isRunning, setIsRunning] = useState(true);
+  const [hasAlarm, setHasAlarm] = useState(false);
 
   // Dimensions in pixels
   const dims = useMemo(() => ({
@@ -42,17 +45,19 @@ export function ColdRoomSimulation() {
     if (step >= 4) {
       const interval = setInterval(() => {
         setCurrentTemp(prev => {
-          if (prev <= 4) return 4;
-          return prev - 1;
+          if (prev <= setpointTemp) return setpointTemp;
+          return prev - 0.5;
         });
+        setIsRunning(true);
       }, 500);
       return () => clearInterval(interval);
     } else {
-      setCurrentTemp(25);
+      setCurrentTemp(-18.4);
+      setIsRunning(false);
     }
-  }, [step]);
+  }, [step, setpointTemp]);
 
-  // Reset view on step change if needed, or trigger animations
+  // Reset view on step change if needed
   useEffect(() => {
     if (step === 0) {
       setIsExploded(true);
@@ -64,7 +69,6 @@ export function ColdRoomSimulation() {
   const totalHeight = dims.innerH + 2 * dims.panel;
   const totalWidth = dims.innerW + 2 * dims.panel;
 
-  // Face styles helper - Dark metallic look
   const faceStyle = (w: number, h: number, transform: string, isInner = false) => ({
     width: w,
     height: h,
@@ -81,11 +85,9 @@ export function ColdRoomSimulation() {
   });
 
   const explodeGap = isExploded ? 40 : 0;
-
   const showWalls = step >= 1;
   const showRoofFloor = step >= 2;
   const showDoor = step >= 3;
-  const isCooling = step >= 4;
 
   return (
     <div className="flex flex-col lg:flex-row gap-8 items-start w-full max-w-[1100px] mx-auto p-6 bg-[#34495e] rounded-lg shadow-2xl border-4 border-[#7f8c8d]"
@@ -184,86 +186,73 @@ export function ColdRoomSimulation() {
       </div>
 
       {/* RIGHT: Industrial Control Panel */}
-      <div className="w-full lg:w-[340px] flex flex-col gap-4">
+      <div className="w-full lg:w-[360px] flex flex-col gap-4">
         
+        {/* Header with Title and Status Lights */}
+        <div className="bg-[#34495e] p-4 rounded-lg border-2 border-[#7f8c8d] shadow-inner" style={{boxShadow: 'inset 2px 2px 5px rgba(0,0,0,0.3)'}}>
+          <h1 className="text-[#00ff41] font-bold text-sm font-mono uppercase tracking-widest mb-3 text-center">UNITÉ DE CONTRÔLE CR-400</h1>
+          <div className="flex justify-center gap-6">
+            <div className="flex flex-col items-center gap-1">
+              <div className={cn("led w-3 h-3 rounded-full", isRunning ? "bg-[#00ff41] shadow-[0_0_8px_#00ff41]" : "bg-[#333]")} />
+              <span className="text-[#7f8c8d] text-xs font-mono">RUN</span>
+            </div>
+            <div className="flex flex-col items-center gap-1">
+              <div className={cn("led w-3 h-3 rounded-full", hasAlarm ? "bg-[#ff0000] shadow-[0_0_8px_#ff0000]" : "bg-[#333]")} />
+              <span className="text-[#7f8c8d] text-xs font-mono">ALARM</span>
+            </div>
+          </div>
+        </div>
+
         {/* Digital Temperature Display */}
         <div className="screen-bg p-5 rounded-lg flex flex-col items-center border-2 border-[#222]">
-          <p className="text-xs text-[#7f8c8d] font-mono mb-3 uppercase tracking-wider">Temperature</p>
-          <div className="led-display text-6xl font-bold mb-2">{currentTemp.toFixed(0)}°C</div>
-          <p className="text-xs text-[#7f8c8d] font-mono">
-            {isCooling ? 'COOLING...' : 'STANDBY'}
-          </p>
-          <div className="flex gap-2 mt-4 w-full">
-            <div className="flex-1 flex flex-col items-center">
-              <div className={cn("led mb-2", isCooling && "on")} />
-              <span className="text-[10px] text-[#7f8c8d] font-mono">POWER</span>
-            </div>
-            <div className="flex-1 flex flex-col items-center">
-              <div className={cn("led mb-2", isCooling && "on")} />
-              <span className="text-[10px] text-[#7f8c8d] font-mono">COOL</span>
-            </div>
-            <div className="flex-1 flex flex-col items-center">
-              <div className={cn("led mb-2", isDoorOpen && "on")} style={{backgroundColor: isDoorOpen ? '#ff0000' : '#333'}} />
-              <span className="text-[10px] text-[#7f8c8d] font-mono">DOOR</span>
+          <p className="text-xs text-[#7f8c8d] font-mono mb-2 uppercase tracking-wider">Température Intérieure</p>
+          <div className="led-display text-5xl font-bold mb-1">{currentTemp.toFixed(1)}°C</div>
+          <p className="text-xs text-[#7f8c8d] font-mono">HUMIDITÉ: {humidity}%</p>
+        </div>
+
+        {/* Controls Section */}
+        <div className="bg-[#34495e] p-4 rounded-lg border-2 border-[#7f8c8d] shadow-inner" style={{boxShadow: 'inset 2px 2px 5px rgba(0,0,0,0.3)'}}>
+          <div className="mb-4">
+            <p className="text-[#00ff41] text-xs font-mono font-bold uppercase tracking-wider mb-3 text-center">Consigne</p>
+            <div className="flex justify-center gap-3">
+              <button 
+                className="industrial-btn text-lg w-12 h-12 p-0"
+                onClick={() => setSetpointTemp(prev => Math.min(10, prev + 1))}
+              >
+                ▲
+              </button>
+              <div className="screen-bg px-4 py-2 text-center min-w-20">
+                <div className="led-display text-3xl font-bold">{setpointTemp}°C</div>
+              </div>
+              <button 
+                className="industrial-btn text-lg w-12 h-12 p-0"
+                onClick={() => setSetpointTemp(prev => Math.max(1, prev - 1))}
+              >
+                ▼
+              </button>
             </div>
           </div>
-        </div>
 
-        {/* Specs Panel */}
-        <div className="bg-[#34495e] p-5 rounded-lg border-2 border-[#7f8c8d] shadow-inner" style={{boxShadow: 'inset 2px 2px 5px rgba(0,0,0,0.3)'}}>
-          <h3 className="text-[#00ff41] font-bold text-base mb-3 font-mono uppercase tracking-wider">SPECIFICATIONS</h3>
-          
-          <div className="space-y-2 text-[#ecf0f1] text-sm font-mono">
-            <div className="flex justify-between text-xs">
-              <span className="text-[#7f8c8d]">INT. DIMENSIONS</span>
-              <span className="text-[#00ff41]">L{CONFIG.internal.L}m × W{CONFIG.internal.W}m × H{CONFIG.internal.H}m</span>
-            </div>
-            <div className="h-px bg-[#7f8c8d] opacity-30" />
-            <div className="flex justify-between text-xs">
-              <span className="text-[#7f8c8d]">VOLUME</span>
-              <span className="text-[#00ff41]">10 M³</span>
-            </div>
-            <div className="flex justify-between text-xs">
-              <span className="text-[#7f8c8d]">CHARGE LIMIT</span>
-              <span className="text-[#00ff41]">250 KG/M²</span>
-            </div>
-            <div className="flex justify-between text-xs">
-              <span className="text-[#7f8c8d]">TARGET TEMP.</span>
-              <span className="text-[#00ff41]">+1°C TO +10°C</span>
-            </div>
-            <div className="h-px bg-[#7f8c8d] opacity-30" />
-            <div className="flex justify-between text-xs">
-              <span className="text-[#7f8c8d]">PANEL THK.</span>
-              <span className="text-[#00ff41]">80 MM</span>
-            </div>
-            <div className="flex justify-between text-xs">
-              <span className="text-[#7f8c8d]">DOOR THK.</span>
-              <span className="text-[#00ff41]">60 MM</span>
-            </div>
+          <div className="h-px bg-[#7f8c8d] opacity-30 mb-4" />
+
+          {/* Step Navigation */}
+          <p className="text-[#00ff41] text-xs font-mono font-bold uppercase tracking-wider mb-3 text-center">Étape {step + 1}/{STEPS.length}</p>
+          <div className="bg-[#2a2a2a] p-3 rounded border border-[#555] mb-3 min-h-16">
+            <p className="text-[#00ff41] text-[10px] font-mono mb-1 uppercase">{STEPS[step].label}</p>
+            <p className="text-[#bdc3c7] text-[11px] leading-tight">{STEPS[step].description}</p>
           </div>
-        </div>
 
-        {/* Step Info */}
-        <div className="bg-[#2a2a2a] p-4 rounded-lg border-2 border-[#7f8c8d] min-h-[90px] flex flex-col">
-          <p className="text-[#00ff41] text-xs font-mono font-bold mb-2 uppercase">STEP {step + 1} / {STEPS.length}</p>
-          <p className="text-[#ecf0f1] text-xs leading-relaxed">
-            <span className="text-[#00ff41] font-mono block mb-1 text-[10px]">{STEPS[step].label}</span>
-            <span className="text-[#bdc3c7] text-[11px]">{STEPS[step].description}</span>
-          </p>
-        </div>
-
-        {/* Industrial Buttons */}
-        <div className="space-y-2">
-          <div className="grid grid-cols-2 gap-2">
+          {/* Navigation Buttons */}
+          <div className="grid grid-cols-2 gap-2 mb-3">
             <button 
-              className="industrial-btn w-full text-sm"
+              className="industrial-btn w-full text-xs"
               onClick={() => setStep(s => Math.max(0, s - 1))}
               disabled={step === 0}
             >
               ◀ PREV
             </button>
             <button 
-              className="industrial-btn w-full text-sm"
+              className="industrial-btn w-full text-xs"
               onClick={() => setStep(s => Math.min(STEPS.length - 1, s + 1))}
               disabled={step === STEPS.length - 1}
             >
@@ -271,39 +260,46 @@ export function ColdRoomSimulation() {
             </button>
           </div>
 
-          <div className="grid grid-cols-3 gap-2">
+          {/* View Controls */}
+          <div className="grid grid-cols-3 gap-2 mb-3">
             <button 
               className={cn("industrial-btn text-xs flex-1", isExploded && "bg-[#00ff41] text-black")}
               onClick={() => setIsExploded(!isExploded)}
+              title="Exploded view"
             >
-              {isExploded ? '⊟' : '⊞'}
+              ⊟
             </button>
             <button 
               className={cn("industrial-btn text-xs flex-1", isDoorOpen && "bg-[#ff0000] text-white")}
               onClick={() => setIsDoorOpen(!isDoorOpen)}
               disabled={!showDoor}
+              title="Door"
             >
               🚪
             </button>
             <button 
               className={cn("industrial-btn text-xs flex-1", autoPlay && "bg-[#00ff41] text-black")}
               onClick={() => setAutoPlay(!autoPlay)}
+              title="Auto-play"
             >
               ▶
             </button>
           </div>
 
+          {/* Emergency Stop */}
           <button 
-            className="industrial-btn w-full text-xs text-red-700"
+            className="emergency-stop w-full h-16 text-xs font-bold uppercase tracking-wider"
             onClick={() => {
               setStep(0);
               setIsDoorOpen(false);
               setIsExploded(false);
               setAutoPlay(false);
-              setCurrentTemp(25);
+              setCurrentTemp(-18.4);
+              setSetpointTemp(4);
+              setHasAlarm(false);
             }}
           >
-            ⟲ RESET
+            ⏹ RESET
           </button>
         </div>
 
