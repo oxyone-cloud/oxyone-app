@@ -69,16 +69,17 @@ export function ColdRoomSimulation() {
   const totalHeight = dims.innerH + 2 * dims.panel;
   const totalWidth = dims.innerW + 2 * dims.panel;
 
+  // Light theme face styles
   const faceStyle = (w: number, h: number, transform: string, isInner = false) => ({
     width: w,
     height: h,
     transform,
     position: 'absolute' as const,
-    border: isInner ? '1px solid rgba(0,255,65,0.1)' : '2px solid rgba(0,255,65,0.15)',
+    border: isInner ? '1px solid rgba(52,73,94,0.2)' : '2px solid rgba(52,73,94,0.15)',
     background: isInner 
-      ? 'linear-gradient(180deg,#1a1d1a,#0f1410)' 
-      : 'linear-gradient(180deg,#2a2a2a,#1a1a1a)',
-    boxShadow: isInner ? 'inset 0 2px 5px rgba(0,255,65,0.05)' : '0 6px 20px rgba(0,0,0,0.8), 0 0 20px rgba(0,255,65,0.1)',
+      ? 'linear-gradient(180deg,#f5f7fa,#ecf1f5)' 
+      : 'linear-gradient(180deg,#e8eef5,#dce4ed)',
+    boxShadow: isInner ? 'inset 0 2px 4px rgba(0,0,0,0.05)' : '0 4px 15px rgba(0,0,0,0.08), 0 0 10px rgba(52,149,235,0.05)',
     borderRadius: isInner ? '4px' : '6px',
     transition: 'transform 0.9s cubic-bezier(.2,.9,.3,1), opacity 0.5s ease',
     backfaceVisibility: 'hidden' as const,
@@ -90,14 +91,14 @@ export function ColdRoomSimulation() {
   const showDoor = step >= 3;
 
   return (
-    <div className="flex flex-col lg:flex-row gap-8 items-start w-full max-w-[1100px] mx-auto p-6 bg-[#34495e] rounded-lg shadow-2xl border-4 border-[#7f8c8d]"
-      style={{boxShadow: 'inset 2px 2px 5px rgba(255,255,255,0.1), 10px 10px 30px rgba(0,0,0,0.5)'}}>
+    <div className="flex flex-col lg:flex-row gap-8 items-start w-full max-w-[1100px] mx-auto p-6 bg-white rounded-2xl border border-[#d1d9e6]"
+      style={{boxShadow: '10px 10px 20px #ced4da, -10px -10px 20px #ffffff'}}>
       
       {/* LEFT: 3D Stage */}
-      <div className="flex-1 w-full min-h-[520px] screen-bg rounded-lg border-4 border-[#222] relative overflow-hidden perspective-scene">
+      <div className="flex-1 w-full min-h-[520px] screen-bg rounded-xl border-4 relative overflow-hidden perspective-scene">
         
         <div className="absolute top-4 left-4 z-10">
-           <div className="px-3 py-1 rounded bg-[#1a1d1a] border border-[#00ff41] text-[#00ff41] text-xs font-mono font-bold">
+           <div className="px-3 py-1 rounded bg-white border border-[#b2dfdb] text-[#264653] text-xs font-mono font-bold" style={{boxShadow: '2px 2px 4px rgba(0,0,0,0.08)'}}>
              3D VIEW
            </div>
         </div>
@@ -167,16 +168,16 @@ export function ColdRoomSimulation() {
                     width: dims.doorW,
                     height: dims.doorH,
                     transform: `translateZ(${dims.innerW / 2 + dims.panel + 2}px) translateX(${totalLength/2 - dims.doorW - 40}px) translateY(${totalHeight/2 - dims.doorH - dims.panel}px) ${isDoorOpen ? 'rotateY(-105deg)' : 'rotateY(0deg)'}`,
-                    background: 'linear-gradient(180deg,#2a2a2a,#1a1a1a)',
-                    border: '3px solid rgba(0,255,65,0.2)',
+                    background: 'linear-gradient(180deg,#f5f7fa,#ecf1f5)',
+                    border: '3px solid rgba(52,149,235,0.2)',
                     borderRadius: '6px',
-                    boxShadow: '2px 0 15px rgba(0,255,65,0.2)'
+                    boxShadow: '2px 0 10px rgba(52,149,235,0.1)'
                   }}
                 >
-                  <span className="text-[10px] font-mono text-[#00ff41] absolute top-1 left-2">
+                  <span className="text-[10px] font-mono text-[#264653] absolute top-1 left-2">
                     H: {CONFIG.doorHeight_m.toFixed(2)}m
                   </span>
-                  <div className="w-2 h-8 rounded-full bg-[#00ff41] absolute right-2 top-1/2 -translate-y-1/2 shadow-md" style={{boxShadow: '0 0 8px #00ff41'}} />
+                  <div className="w-2 h-8 rounded-full bg-[#3498db] absolute right-2 top-1/2 -translate-y-1/2 shadow-sm" style={{boxShadow: '0 0 6px rgba(52,149,235,0.3)'}} />
                 </div>
               )}
 
@@ -189,43 +190,43 @@ export function ColdRoomSimulation() {
       <div className="w-full lg:w-[360px] flex flex-col gap-4">
         
         {/* Header with Title and Status Lights */}
-        <div className="bg-[#34495e] p-4 rounded-lg border-2 border-[#7f8c8d] shadow-inner" style={{boxShadow: 'inset 2px 2px 5px rgba(0,0,0,0.3)'}}>
-          <h1 className="text-[#00ff41] font-bold text-sm font-mono uppercase tracking-widest mb-3 text-center">UNITÉ DE CONTRÔLE CR-400</h1>
+        <div className="neomorph-box p-4 rounded-xl">
+          <h1 className="text-[#7f8c8d] font-bold text-sm font-mono uppercase tracking-widest mb-3 text-center border-b border-[#3498db] pb-2">Unité De Contrôle CR-400</h1>
           <div className="flex justify-center gap-6">
             <div className="flex flex-col items-center gap-1">
-              <div className={cn("led w-3 h-3 rounded-full", isRunning ? "bg-[#00ff41] shadow-[0_0_8px_#00ff41]" : "bg-[#333]")} />
-              <span className="text-[#7f8c8d] text-xs font-mono">RUN</span>
+              <div className={cn("led w-3 h-3 rounded-full transition-all", isRunning ? "bg-[#3498db] shadow-[0_0_6px_rgba(52,149,235,0.6)]" : "bg-[#d1d9e6]")} />
+              <span className="text-[#34495e] text-xs font-mono">RUN</span>
             </div>
             <div className="flex flex-col items-center gap-1">
-              <div className={cn("led w-3 h-3 rounded-full", hasAlarm ? "bg-[#ff0000] shadow-[0_0_8px_#ff0000]" : "bg-[#333]")} />
-              <span className="text-[#7f8c8d] text-xs font-mono">ALARM</span>
+              <div className={cn("led w-3 h-3 rounded-full transition-all", hasAlarm ? "bg-[#ff0000] shadow-[0_0_6px_rgba(255,0,0,0.6)]" : "bg-[#d1d9e6]")} />
+              <span className="text-[#34495e] text-xs font-mono">ALARM</span>
             </div>
           </div>
         </div>
 
         {/* Digital Temperature Display */}
-        <div className="screen-bg p-5 rounded-lg flex flex-col items-center border-2 border-[#222]">
-          <p className="text-xs text-[#7f8c8d] font-mono mb-2 uppercase tracking-wider">Température Intérieure</p>
+        <div className="screen-bg p-5 rounded-xl flex flex-col items-center">
+          <p className="text-xs text-[#34495e] font-mono mb-2 uppercase tracking-wider">Température Intérieure</p>
           <div className="led-display text-5xl font-bold mb-1">{currentTemp.toFixed(1)}°C</div>
-          <p className="text-xs text-[#7f8c8d] font-mono">HUMIDITÉ: {humidity}%</p>
+          <p className="text-xs text-[#34495e] font-mono">HUMIDITÉ: {humidity}%</p>
         </div>
 
         {/* Controls Section */}
-        <div className="bg-[#34495e] p-4 rounded-lg border-2 border-[#7f8c8d] shadow-inner" style={{boxShadow: 'inset 2px 2px 5px rgba(0,0,0,0.3)'}}>
-          <div className="mb-4">
-            <p className="text-[#00ff41] text-xs font-mono font-bold uppercase tracking-wider mb-3 text-center">Consigne</p>
-            <div className="flex justify-center gap-3">
+        <div className="neomorph-box p-4 rounded-xl space-y-4">
+          <div>
+            <p className="text-[#7f8c8d] text-xs font-mono font-bold uppercase tracking-wider mb-3 text-center">Consigne</p>
+            <div className="flex justify-center gap-3 items-center">
               <button 
-                className="industrial-btn text-lg w-12 h-12 p-0"
+                className="industrial-btn text-lg w-12 h-12 p-0 rounded-lg font-bold"
                 onClick={() => setSetpointTemp(prev => Math.min(10, prev + 1))}
               >
                 ▲
               </button>
-              <div className="screen-bg px-4 py-2 text-center min-w-20">
+              <div className="screen-bg px-4 py-2 text-center min-w-24 rounded-lg">
                 <div className="led-display text-3xl font-bold">{setpointTemp}°C</div>
               </div>
               <button 
-                className="industrial-btn text-lg w-12 h-12 p-0"
+                className="industrial-btn text-lg w-12 h-12 p-0 rounded-lg font-bold"
                 onClick={() => setSetpointTemp(prev => Math.max(1, prev - 1))}
               >
                 ▼
@@ -233,26 +234,26 @@ export function ColdRoomSimulation() {
             </div>
           </div>
 
-          <div className="h-px bg-[#7f8c8d] opacity-30 mb-4" />
+          <div className="h-px bg-[#d1d9e6]" />
 
           {/* Step Navigation */}
-          <p className="text-[#00ff41] text-xs font-mono font-bold uppercase tracking-wider mb-3 text-center">Étape {step + 1}/{STEPS.length}</p>
-          <div className="bg-[#2a2a2a] p-3 rounded border border-[#555] mb-3 min-h-16">
-            <p className="text-[#00ff41] text-[10px] font-mono mb-1 uppercase">{STEPS[step].label}</p>
-            <p className="text-[#bdc3c7] text-[11px] leading-tight">{STEPS[step].description}</p>
+          <p className="text-[#7f8c8d] text-xs font-mono font-bold uppercase tracking-wider mb-2 text-center">Étape {step + 1}/{STEPS.length}</p>
+          <div className="bg-[#f5f7fa] p-3 rounded-lg border border-[#d1d9e6] min-h-16">
+            <p className="text-[#34495e] text-[10px] font-mono mb-1 uppercase font-bold">{STEPS[step].label}</p>
+            <p className="text-[#34495e] text-[11px] leading-tight">{STEPS[step].description}</p>
           </div>
 
           {/* Navigation Buttons */}
-          <div className="grid grid-cols-2 gap-2 mb-3">
+          <div className="grid grid-cols-2 gap-2 mb-2">
             <button 
-              className="industrial-btn w-full text-xs"
+              className="industrial-btn rounded-lg text-xs font-bold"
               onClick={() => setStep(s => Math.max(0, s - 1))}
               disabled={step === 0}
             >
               ◀ PREV
             </button>
             <button 
-              className="industrial-btn w-full text-xs"
+              className="industrial-btn rounded-lg text-xs font-bold"
               onClick={() => setStep(s => Math.min(STEPS.length - 1, s + 1))}
               disabled={step === STEPS.length - 1}
             >
@@ -261,16 +262,16 @@ export function ColdRoomSimulation() {
           </div>
 
           {/* View Controls */}
-          <div className="grid grid-cols-3 gap-2 mb-3">
+          <div className="grid grid-cols-3 gap-2">
             <button 
-              className={cn("industrial-btn text-xs flex-1", isExploded && "bg-[#00ff41] text-black")}
+              className={cn("industrial-btn rounded-lg text-xs font-bold transition-all", isExploded && "bg-[#b2dfdb] text-[#264653] shadow-inset")}
               onClick={() => setIsExploded(!isExploded)}
               title="Exploded view"
             >
               ⊟
             </button>
             <button 
-              className={cn("industrial-btn text-xs flex-1", isDoorOpen && "bg-[#ff0000] text-white")}
+              className={cn("industrial-btn rounded-lg text-xs font-bold transition-all", isDoorOpen && "bg-[#ff9999] text-white")}
               onClick={() => setIsDoorOpen(!isDoorOpen)}
               disabled={!showDoor}
               title="Door"
@@ -278,17 +279,19 @@ export function ColdRoomSimulation() {
               🚪
             </button>
             <button 
-              className={cn("industrial-btn text-xs flex-1", autoPlay && "bg-[#00ff41] text-black")}
+              className={cn("industrial-btn rounded-lg text-xs font-bold transition-all", autoPlay && "bg-[#b2dfdb] text-[#264653]")}
               onClick={() => setAutoPlay(!autoPlay)}
               title="Auto-play"
             >
               ▶
             </button>
           </div>
+        </div>
 
-          {/* Emergency Stop */}
+        {/* Emergency Stop */}
+        <div className="flex justify-center pt-2">
           <button 
-            className="emergency-stop w-full h-16 text-xs font-bold uppercase tracking-wider"
+            className="emergency-stop"
             onClick={() => {
               setStep(0);
               setIsDoorOpen(false);
