@@ -1,79 +1,106 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { createRoot } from "react-dom/client";
 
 function App() {
-  const [wifiConnected, setWifiConnected] = useState(false);
+  const [wifiStatus, setWifiStatus] = useState("DISCONNECTED"); // "DISCONNECTED", "SCANNING", "CONNECTED"
+  const [metrics, setMetrics] = useState({ temp: -18.5, humidity: 85, power: 1.2 });
+
+  // Simuler une petite variation des données quand on est connecté
+  useEffect(() => {
+    if (wifiStatus === "CONNECTED") {
+      const interval = setInterval(() => {
+        setMetrics(prev => ({
+          temp: +(prev.temp + (Math.random() * 0.2 - 0.1)).toFixed(1),
+          humidity: +(prev.humidity + (Math.random() * 0.4 - 0.2)).toFixed(1),
+          power: +(prev.power + (Math.random() * 0.06 - 0.03)).toFixed(2)
+        }));
+      }, 2000);
+      return () => clearInterval(interval);
+    }
+  }, [wifiStatus]);
+
+  const handleScan = () => {
+    setWifiStatus("SCANNING");
+    setTimeout(() => {
+      setWifiStatus("CONNECTED");
+    }, 2500); // Temps du scan réaliste
+  };
 
   return (
-    <div style={{ minHeight: '100vh', backgroundColor: '#0f172a', color: '#f8fafc', fontFamily: 'sans-serif', padding: '20px' }}>
-      {/* Header avec LED de statut */}
-      <header style={{ borderBottom: '1px solid #334155', paddingBottom: '20px', marginBottom: '20px', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-        <h1 style={{ margin: 0, fontSize: '1.4rem', letterSpacing: '1px' }}>OxyONE | Interface SSCI</h1>
-        <div style={{ display: 'flex', alignItems: 'center', gap: '12px', background: '#1e293b', padding: '8px 15px', borderRadius: '20px', border: '1px solid #334155' }}>
-          <div style={{ 
-            width: '10px', height: '10px', borderRadius: '50%', 
-            backgroundColor: wifiConnected ? '#22c55e' : '#ef4444',
-            boxShadow: wifiConnected ? '0 0 10px #22c55e' : '0 0 10px #ef4444',
-            transition: 'all 0.3s'
-          }}></div>
-          <span style={{ fontSize: '0.75rem', fontWeight: 'bold', fontFamily: 'monospace' }}>
-            {wifiConnected ? "IoT CONNECTÉ" : "RECHERCHE SIGNAL..."}
-          </span>
+    <div style={{ minHeight: '100vh', backgroundColor: '#020617', color: '#f8fafc', fontFamily: 'monospace', padding: '20px' }}>
+
+      {/* HEADER OXYONE */}
+      <header style={{ borderBottom: '1px solid #1e293b', paddingBottom: '15px', marginBottom: '25px', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+        <div>
+          <h1 style={{ margin: 0, fontSize: '1.2rem', color: '#38bdf8' }}>OxyONE | TERMINAL SSCI</h1>
+          <span style={{ fontSize: '0.65rem', color: '#64748b' }}>USINE DU FUTUR - SECTEUR FROID</span>
+        </div>
+        <div style={{ textAlign: 'right' }}>
+          <div style={{ fontSize: '0.7rem', color: wifiStatus === "CONNECTED" ? '#22c55e' : '#ef4444' }}>
+            ● {wifiStatus}
+          </div>
         </div>
       </header>
 
-      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(320px, 1fr))', gap: '25px' }}>
+      <div style={{ display: 'grid', gridTemplateColumns: '1.5fr 1fr', gap: '20px' }}>
 
-        {/* Zone de Simulation 3D */}
-        <div style={{ 
-          backgroundColor: '#000', borderRadius: '15px', height: '400px', 
-          display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', 
-          border: '1px solid #334155', position: 'relative', overflow: 'hidden',
-          boxShadow: 'inset 0 0 50px rgba(0,0,0,1), 0 10px 30px rgba(0,0,0,0.5)'
-        }}>
-          <div style={{ color: wifiConnected ? '#3b82f6' : '#475569', marginBottom: '15px', transition: 'color 0.5s' }}>
-            <svg width="60" height="60" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="1" d="M21 16V8a2 2 0 00-1-1.73l-7-4a2 2 0 00-2 0l-7 4A2 2 0 003 8v8a2 2 0 001 1.73l7 4a2 2 0 002 0l7-4A2 2 0 0021 16z"></path>
+        {/* BLOC A : VISUALISATION 3D */}
+        <div style={{ backgroundColor: '#000', borderRadius: '8px', border: '1px solid #1e293b', height: '450px', position: 'relative', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+          <div style={{ color: wifiStatus === "CONNECTED" ? '#38bdf8' : '#1e293b', textAlign: 'center' }}>
+            <svg width="80" height="80" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="1" d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4" />
             </svg>
+            <p style={{ marginTop: '10px', fontSize: '0.7rem', letterSpacing: '2px' }}>VUE ISOMÉTRIQUE CHAMBRE FROIDE</p>
           </div>
-          <p style={{ color: '#94a3b8', fontSize: '0.8rem', letterSpacing: '3px', fontWeight: 'bold' }}>MOTEUR 3D : CHAMBRE FROIDE</p>
-          <p style={{ color: '#475569', fontSize: '0.65rem', marginTop: '5px' }}>ÉCHELLE 1:1 - PRÉCISION MÉTRIQUE</p>
-
-          {/* Effet de scanline industriel */}
-          <div style={{ position: 'absolute', inset: 0, pointerEvents: 'none', background: 'linear-gradient(rgba(18,16,16,0) 50%, rgba(0,0,0,0.1) 50%), linear-gradient(90deg, rgba(255,0,0,0.03), rgba(0,255,0,0.01), rgba(0,0,255,0.03))', backgroundSize: '100% 4px, 4px 100%' }}></div>
         </div>
 
-        {/* Panneau de Contrôle IoT */}
-        <div style={{ backgroundColor: '#1e293b', padding: '25px', borderRadius: '15px', border: '1px solid #334155', display: 'flex', flexDirection: 'column', gap: '20px' }}>
-          <h2 style={{ fontSize: '0.7rem', color: '#64748b', textTransform: 'uppercase', letterSpacing: '1.5px', margin: 0 }}>Unité de Commande</h2>
+        {/* BLOC B & C : CONTRÔLES ET MÉTRIQUES */}
+        <div style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
 
-          <div style={{ background: '#0f172a', padding: '15px', borderRadius: '10px', border: '1px solid #334155' }}>
-            <p style={{ fontSize: '0.7rem', color: '#94a3b8', marginBottom: '10px' }}>ÉTAT DE LA LIAISON SANS FIL</p>
+          {/* BOUTON DE SCAN */}
+          <div style={{ backgroundColor: '#0f172a', padding: '20px', borderRadius: '8px', border: '1px solid #1e293b' }}>
             <button 
-              onClick={() => setWifiConnected(!wifiConnected)}
+              onClick={wifiStatus === "CONNECTED" ? () => setWifiStatus("DISCONNECTED") : handleScan}
+              disabled={wifiStatus === "SCANNING"}
               style={{ 
-                width: '100%', padding: '12px', borderRadius: '6px', border: 'none', 
-                backgroundColor: wifiConnected ? '#7f1d1d' : '#2563eb', 
-                color: 'white', fontWeight: 'bold', cursor: 'pointer',
-                transition: 'all 0.2s', fontSize: '0.8rem'
+                width: '100%', padding: '15px', borderRadius: '4px', border: '1px solid #38bdf8',
+                backgroundColor: wifiStatus === "SCANNING" ? 'transparent' : (wifiStatus === "CONNECTED" ? '#7f1d1d' : '#0369a1'),
+                color: 'white', cursor: wifiStatus === "SCANNING" ? 'wait' : 'pointer', fontWeight: 'bold'
               }}
             >
-              {wifiConnected ? "DÉCONNECTER L'UNITÉ" : "LANCER SCAN WIFI"}
+              {wifiStatus === "SCANNING" ? "SCAN EN COURS..." : (wifiStatus === "CONNECTED" ? "STOPPER LIAISON" : "LANCER SCAN WIFI")}
             </button>
           </div>
 
-          <div style={{ marginTop: 'auto', fontSize: '0.7rem', color: '#475569', fontFamily: 'monospace' }}>
-             PROJET : OxyONE v1.0<br/>
-             STATUS : SYSTÈME PRÊT
-          </div>
-        </div>
+          {/* INDICATEURS KPI (Les Jauges) */}
+          <div style={{ backgroundColor: '#0f172a', padding: '20px', borderRadius: '8px', border: '1px solid #1e293b', flexGrow: 1 }}>
+            <h3 style={{ fontSize: '0.7rem', color: '#64748b', marginBottom: '20px' }}>DONNÉES CAPTEURS</h3>
 
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
+              {/* Température */}
+              <MetricBox label="TEMPÉRATURE" value={`${metrics.temp}°C`} color="#3b82f6" active={wifiStatus === "CONNECTED"} />
+              {/* Humidité */}
+              <MetricBox label="HUMIDITÉ" value={`${metrics.humidity}%`} color="#10b981" active={wifiStatus === "CONNECTED"} />
+              {/* Puissance */}
+              <MetricBox label="CONSO. COMPRESSEUR" value={`${metrics.power} kW`} color="#f59e0b" active={wifiStatus === "CONNECTED"} />
+            </div>
+          </div>
+
+        </div>
       </div>
     </div>
   );
 }
 
-const root = document.getElementById("root");
-if (root) {
-  createRoot(root).render(<App />);
+// Composant réutilisable pour les petites jauges
+function MetricBox({ label, value, color, active }) {
+  return (
+    <div style={{ borderLeft: `3px solid ${active ? color : '#1e293b'}`, paddingLeft: '15px', opacity: active ? 1 : 0.3, transition: 'all 0.5s' }}>
+      <div style={{ fontSize: '0.6rem', color: '#64748b', marginBottom: '4px' }}>{label}</div>
+      <div style={{ fontSize: '1.4rem', fontWeight: 'bold', color: active ? '#f8fafc' : '#475569' }}>{active ? value : "--.-"}</div>
+    </div>
+  );
 }
+
+const root = document.getElementById("root");
+if (root) { createRoot(root).render(<App />); }
