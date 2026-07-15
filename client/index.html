@@ -2,21 +2,29 @@
 <html lang="fr">
 <head>
     <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>OxyONE | Plateforme Usine du Futur</title>
     <style>
-        body { background: #000; color: #00ff41; font-family: monospace; display: flex; justify-content: center; align-items: center; height: 100vh; margin: 0; }
-        #debug-msg { border: 1px solid #00ff41; padding: 20px; }
+        body { 
+            background: #0d0f12; 
+            color: #00ff41; 
+            font-family: monospace; 
+            margin: 0; 
+            padding: 0;
+        }
     </style>
 </head>
 <body>
     <div id="root">
-        <div id="debug-msg">
+        <!-- Ce message de secours s'affiche uniquement si React ne charge pas -->
+        <div style="padding: 20px; border: 1px solid #00ff41; margin: 20px;">
             [ DIAGNOSTIC SYSTÈME ]<br>
-            Si vous voyez ce message, le HTML fonctionne.<br>
-            Tentative de chargement du moteur React...
+            Fichier index.html détecté.<br>
+            Tentative de chargement du moteur React OxyONE...
         </div>
     </div>
 
-<script type="module" src="/main.tsx"></script>
+    <!-- Chargement du script principal (ajustez le chemin si votre main.tsx est dans /src/main.tsx) -->
+    <script type="module" src="/src/main.tsx"></script>
 </body>
 </html>
