@@ -1,3 +1,4 @@
+import React from 'react';
 "use client"
 
 import * as React from "react"
@@ -18,12 +19,11 @@ import {
   SheetTitle,
 } from "@/components/ui/sheet"
 import { Skeleton } from "@/components/ui/skeleton"
-import {
-  Tooltip,
-  TooltipContent,
-  TooltipProvider,
-  TooltipTrigger,
-} from "@/components/ui/tooltip"
+// Tooltip Shims
+const TooltipProvider = ({ children, ...props }: any) => <>{children}</>;
+const Tooltip = ({ children, ...props }: any) => <>{children}</>;
+const TooltipTrigger = ({ children, ...props }: any) => <>{children}</>;
+const TooltipContent = ({ children, ...props }: any) => <div style={{display: 'none'}} {...props}>{children}</div>;
 
 const SIDEBAR_COOKIE_NAME = "sidebar_state"
 const SIDEBAR_COOKIE_MAX_AGE = 60 * 60 * 24 * 7
