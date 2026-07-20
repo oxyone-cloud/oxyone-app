@@ -12,6 +12,7 @@ declare module "http" {
   }
 }
 
+// Middlewares de base
 app.use(
   express.json({
     verify: (req, _res, buf) => {
@@ -19,9 +20,9 @@ app.use(
     },
   }),
 );
-
 app.use(express.urlencoded({ extended: false }));
 
+// Fonction de journalisation
 export function log(message: string, source = "express") {
   const formattedTime = new Date().toLocaleTimeString("en-US", {
     hour: "numeric",
@@ -32,15 +33,18 @@ export function log(message: string, source = "express") {
   console.log(`${formattedTime} [${source}] ${message}`);
 }
 
+// Middleware de tracking des requêtes API
 app.use((req, res, next) => {
   const start = Date.now();
   const path = req.path;
   let capturedJsonResponse: Record<string, any> | undefined = undefined;
+
   const originalResJson = res.json;
   res.json = function (bodyJson, ...args) {
     capturedJsonResponse = bodyJson;
     return originalResJson.apply(res, [bodyJson, ...args]);
   };
+
   res.on("finish", () => {
     const duration = Date.now() - start;
     if (path.startsWith("/api")) {
@@ -54,9 +58,12 @@ app.use((req, res, next) => {
   next();
 });
 
+// Initialisation et démarrage du serveur
 (async () => {
+  // Enregistrement des routes API et du WebSocket s'il existe
   await registerRoutes(httpServer, app);
 
+  // Gestion des fichiers statiques selon l'environnement
   if (process.env.NODE_ENV === "production") {
     serveStatic(app);
   } else {
@@ -64,18 +71,17 @@ app.use((req, res, next) => {
     await setupVite(httpServer, app);
   }
 
+  // Middleware global de gestion des erreurs
   app.use((err: any, _req: Request, res: Response, _next: NextFunction) => {
     const status = err.status || err.statusCode || 500;
     const message = err.message || "Internal Server Error";
     res.status(status).json({ message });
   });
 
-  const port = parseInt(process.env.PORT || "1104", 10);
-  httpServer.listen({
-    port,
-    host: "0.0.0.0",
-    reusePort: true,
-  }, () => {
+  // Détermination dynamique du port libre
+  const port = parseInt(process.env.PORT || "1105", 10);
+
+  httpServer.listen(port, "0.0.0.0", () => {
     log(`serving on port ${port}`);
   });
 })();
