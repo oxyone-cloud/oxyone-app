@@ -1,41 +1,21 @@
-import { type Express } from "express";
-import { createServer as createViteServer, createLogger } from "vite";
-import { type Server } from "http";
-import viteConfig from "../vite.config";
-import fs from "fs";
+import { defineConfig } from "vite";
+import react from "@vitejs/plugin-react";
 import path from "path";
+import runtimeErrorOverlay from "@replit/vite-plugin-runtime-error-overlay";
+import themePlugin from "@replit/vite-plugin-shadcn-theme-json";
 
-const viteLogger = createLogger();
-
-export async function setupVite(server: Server, app: Express) {
-  const serverOptions = {
-    middlewareMode: true,
-    hmr: { server, path: "/vite-hmr" },
-    allowedHosts: true as const,
-  };
-
-  const vite = await createViteServer({
-    ...viteConfig,
-    configFile: false,
-    customLogger: viteLogger,
-    server: serverOptions,
-    appType: "custom",
-  });
-
-  app.use(vite.middlewares);
-
-  app.use("*", async (req, res, next) => {
-    try {
-      const clientTemplate = path.resolve(process.cwd(), "client", "index.html");
-      let template = await fs.promises.readFile(clientTemplate, "utf-8");
-      
-      // On passe l'URL de base "/" pour que Vite résolve correctement /src/main.tsx par rapport à sa racine (client/)
-      const page = await vite.transformIndexHtml(req.baseUrl || req.originalUrl, template);
-      
-      res.status(200).set({ "Content-Type": "text/html" }).end(page);
-    } catch (e) {
-      vite.ssrFixStacktrace(e as Error);
-      next(e);
-    }
-  });
-}
+export default defineConfig({
+  plugins: [react(), runtimeErrorOverlay(), themePlugin()],
+  resolve: {
+    alias: {
+      "@": path.resolve(__dirname, "client", "src"),
+      "@shared": path.resolve(__dirname, "shared"),
+      "@assets": path.resolve(__dirname, "attached_assets"),
+    },
+  },
+  root: path.resolve(__dirname, "client"),
+  build: {
+    outDir: path.resolve(__dirname, "dist/public"),
+    emptyOutDir: true,
+  },
+});

@@ -56,7 +56,14 @@ async function buildAll() {
       "process.env.NODE_ENV": '"production"',
     },
     minify: true,
-    external: externals,
+    external: [
+      ...externals,
+      "@replit/vite-plugin-runtime-error-overlay",
+      "@replit/vite-plugin-shadcn-theme-json",
+      "@replit/vite-plugin-cartographer",
+      "@replit/vite-plugin-dev-banner",
+      "@replit/vite-plugin-runtime-error-modal"
+    ],
     logLevel: "info",
   });
 }

@@ -1,5 +1,5 @@
 modules = ["nodejs-20", "postgresql-16", "python-3.11", "web"]
-run = "npm run dev:client"
+run = "npm run dev"
 hidden = [".config", ".git", "generated-icon.png", "node_modules", "dist"]
 
 [nix]
@@ -16,6 +16,14 @@ localPort = 1105
 externalPort = 80
 
 [[ports]]
+localPort = 1107
+externalPort = 3000
+
+[[ports]]
+localPort = 3000
+externalPort = 3001
+
+[[ports]]
 localPort = 5000
 
 [env]
@@ -30,5 +38,5 @@ author = "agent"
 
 [[workflows.workflow.tasks]]
 task = "shell.exec"
-args = "npm run dev:client"
+args = "npm run dev"
 waitForPort = 1105

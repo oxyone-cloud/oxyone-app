@@ -1,7 +1,8 @@
 import express, { type Request, Response, NextFunction } from "express";
 import { registerRoutes } from "./routes";
-import { serveStatic } from "./static";
 import { createServer } from "http";
+import path from "path";
+import fs from "fs";
 
 const app = express();
 const httpServer = createServer(app);
@@ -36,7 +37,7 @@ export function log(message: string, source = "express") {
 // Middleware de tracking des requêtes API
 app.use((req, res, next) => {
   const start = Date.now();
-  const path = req.path;
+  const pathArg = req.path;
   let capturedJsonResponse: Record<string, any> | undefined = undefined;
 
   const originalResJson = res.json;
@@ -47,8 +48,8 @@ app.use((req, res, next) => {
 
   res.on("finish", () => {
     const duration = Date.now() - start;
-    if (path.startsWith("/api")) {
-      let logLine = `${req.method} ${path} ${res.statusCode} in ${duration}ms`;
+    if (pathArg.startsWith("/api")) {
+      let logLine = `${req.method} ${pathArg} ${res.statusCode} in ${duration}ms`;
       if (capturedJsonResponse) {
         logLine += ` :: ${JSON.stringify(capturedJsonResponse)}`;
       }
@@ -60,13 +61,23 @@ app.use((req, res, next) => {
 
 // Initialisation et démarrage du serveur
 (async () => {
-  // Enregistrement des routes API et du WebSocket s'il existe
+  // Enregistrement des routes API
   await registerRoutes(httpServer, app);
 
-  // Gestion des fichiers statiques selon l'environnement
-  if (process.env.NODE_ENV === "production") {
-    serveStatic(app);
+  // SERVICE DES FICHIERS STATIQUES INTEGRÉ (Évite le problème de chemin)
+  const clientBuildPath = path.resolve(process.cwd(), "dist", "public");
+
+  if (fs.existsSync(clientBuildPath)) {
+    log(`Dossier statique détecté à : ${clientBuildPath}`);
+    app.use(express.static(clientBuildPath));
+
+    // Redirection universelle pour Single Page Application (SPA)
+    app.get("*", (req, res, next) => {
+      if (req.path.startsWith("/api")) return next();
+      res.sendFile(path.join(clientBuildPath, "index.html"));
+    });
   } else {
+    log(`Attention : dossier statique introuvable à ${clientBuildPath}. Tentative avec Vite...`);
     const { setupVite } = await import("./vite");
     await setupVite(httpServer, app);
   }
@@ -78,7 +89,7 @@ app.use((req, res, next) => {
     res.status(status).json({ message });
   });
 
-  // Détermination dynamique du port libre
+  // Détermination du port
   const port = parseInt(process.env.PORT || "1105", 10);
 
   httpServer.listen(port, "0.0.0.0", () => {
