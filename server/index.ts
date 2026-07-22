@@ -7,6 +7,7 @@ const app = express();
 app.use(express.json());
 app.use(express.urlencoded({ extended: false }));
 
+// Middleware de journalisation (Logging)
 app.use((req, res, next) => {
   const start = Date.now();
   const path = req.path;
@@ -36,23 +37,30 @@ app.use((req, res, next) => {
 });
 
 (async () => {
-  // On passe 'app' directement à registerRoutes
+  // Enregistrement des routes API et création de l'instance HTTP Server
   const server = await registerRoutes(app);
 
-  app.use((err: any, _req: Request, res: Response, _next: NextFunction) => {
-    const status = err.status || err.statusCode || 500;
-    const message = err.message || "Internal Server Error";
-
-    res.status(status).json({ message });
-    throw err;
-  });
-
+  // Configuration selon l'environnement (Vite dev server vs Static build)
   if (app.get("env") === "development") {
     await setupVite(app, server);
   } else {
     serveStatic(app);
   }
 
+  // Middleware global de gestion d'erreurs (SANS 'throw err')
+  app.use((err: any, _req: Request, res: Response, _next: NextFunction) => {
+    const status = err.status || err.statusCode || 500;
+    const message = err.message || "Internal Server Error";
+
+    // Evite d'envoyer la réponse deux fois si déjà fermée
+    if (!res.headersSent) {
+      res.status(status).json({ message });
+    }
+    // Log propre de l'erreur côté serveur
+    console.error("❌ Error handler intercept:", err);
+  });
+
+  // Écoute sur le port fourni par Replit/l'environnement ou 5000 par défaut
   const PORT = Number(process.env.PORT) || 5000;
   server.listen(PORT, "0.0.0.0", () => {
     log(`serving on port ${PORT}`);
