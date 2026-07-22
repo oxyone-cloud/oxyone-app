@@ -1,43 +1,15 @@
 import express, { type Request, Response, NextFunction } from "express";
 import { registerRoutes } from "./routes";
-import { createServer } from "http";
-import path from "path";
-import fs from "fs";
+import { setupVite, serveStatic, log } from "./vite";
 
 const app = express();
-const httpServer = createServer(app);
 
-declare module "http" {
-  interface IncomingMessage {
-    rawBody: unknown;
-  }
-}
-
-// Middlewares de base
-app.use(
-  express.json({
-    verify: (req, _res, buf) => {
-      req.rawBody = buf;
-    },
-  }),
-);
+app.use(express.json());
 app.use(express.urlencoded({ extended: false }));
 
-// Fonction de journalisation
-export function log(message: string, source = "express") {
-  const formattedTime = new Date().toLocaleTimeString("en-US", {
-    hour: "numeric",
-    minute: "2-digit",
-    second: "2-digit",
-    hour12: true,
-  });
-  console.log(`${formattedTime} [${source}] ${message}`);
-}
-
-// Middleware de tracking des requêtes API
 app.use((req, res, next) => {
   const start = Date.now();
-  const pathArg = req.path;
+  const path = req.path;
   let capturedJsonResponse: Record<string, any> | undefined = undefined;
 
   const originalResJson = res.json;
@@ -48,51 +20,41 @@ app.use((req, res, next) => {
 
   res.on("finish", () => {
     const duration = Date.now() - start;
-    if (pathArg.startsWith("/api")) {
-      let logLine = `${req.method} ${pathArg} ${res.statusCode} in ${duration}ms`;
+    if (path.startsWith("/api")) {
+      let line = `${req.method} ${path} ${res.statusCode} in ${duration}ms`;
       if (capturedJsonResponse) {
-        logLine += ` :: ${JSON.stringify(capturedJsonResponse)}`;
+        line += ` :: ${JSON.stringify(capturedJsonResponse)}`;
       }
-      log(logLine);
+      if (line.length > 80) {
+        line = line.slice(0, 79) + "…";
+      }
+      log(line);
     }
   });
+
   next();
 });
 
-// Initialisation et démarrage du serveur
 (async () => {
-  // Enregistrement des routes API
-  await registerRoutes(httpServer, app);
+  // On passe 'app' directement à registerRoutes
+  const server = await registerRoutes(app);
 
-  // SERVICE DES FICHIERS STATIQUES INTEGRÉ (Évite le problème de chemin)
-  const clientBuildPath = path.resolve(process.cwd(), "dist", "public");
-
-  if (fs.existsSync(clientBuildPath)) {
-    log(`Dossier statique détecté à : ${clientBuildPath}`);
-    app.use(express.static(clientBuildPath));
-
-    // Redirection universelle pour Single Page Application (SPA)
-    app.get("*", (req, res, next) => {
-      if (req.path.startsWith("/api")) return next();
-      res.sendFile(path.join(clientBuildPath, "index.html"));
-    });
-  } else {
-    log(`Attention : dossier statique introuvable à ${clientBuildPath}. Tentative avec Vite...`);
-    const { setupVite } = await import("./vite");
-    await setupVite(httpServer, app);
-  }
-
-  // Middleware global de gestion des erreurs
   app.use((err: any, _req: Request, res: Response, _next: NextFunction) => {
     const status = err.status || err.statusCode || 500;
     const message = err.message || "Internal Server Error";
+
     res.status(status).json({ message });
+    throw err;
   });
 
-  // Détermination du port
-  const port = parseInt(process.env.PORT || "1105", 10);
+  if (app.get("env") === "development") {
+    await setupVite(app, server);
+  } else {
+    serveStatic(app);
+  }
 
-  httpServer.listen(port, "0.0.0.0", () => {
-    log(`serving on port ${port}`);
+  const PORT = Number(process.env.PORT) || 5000;
+  server.listen(PORT, "0.0.0.0", () => {
+    log(`serving on port ${PORT}`);
   });
 })();

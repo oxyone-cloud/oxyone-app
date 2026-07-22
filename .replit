@@ -12,22 +12,11 @@ build = ["npm", "run", "build"]
 run = ["npm", "run", "start"]
 
 [[ports]]
-localPort = 1105
+localPort = 5000
 externalPort = 80
 
-[[ports]]
-localPort = 1107
-externalPort = 3000
-
-[[ports]]
-localPort = 3000
-externalPort = 3001
-
-[[ports]]
-localPort = 5000
-
 [env]
-PORT = "1105"
+PORT = "5000"
 
 [workflows]
 runButton = "OxyONE UI"
@@ -39,4 +28,4 @@ author = "agent"
 [[workflows.workflow.tasks]]
 task = "shell.exec"
 args = "npm run dev"
-waitForPort = 1105
+waitForPort = 5000

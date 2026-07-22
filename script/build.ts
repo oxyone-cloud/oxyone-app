@@ -1,74 +1,30 @@
 import { build as esbuild } from "esbuild";
-import { build as viteBuild } from "vite";
-import { rm, readFile } from "fs/promises";
+import path from "path";
+import { fileURLToPath } from "url";
+import { execSync } from "child_process";
 
-// server deps to bundle to reduce openat(2) syscalls
-// which helps cold start times
-const allowlist = [
-  "@google/generative-ai",
-  "@neondatabase/serverless",
-  "axios",
-  "connect-pg-simple",
-  "cors",
-  "date-fns",
-  "drizzle-orm",
-  "drizzle-zod",
-  "express",
-  "express-rate-limit",
-  "express-session",
-  "jsonwebtoken",
-  "memorystore",
-  "multer",
-  "nanoid",
-  "nodemailer",
-  "openai",
-  "passport",
-  "passport-local",
-  "stripe",
-  "uuid",
-  "ws",
-  "xlsx",
-  "zod",
-  "zod-validation-error",
-];
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
 
 async function buildAll() {
-  await rm("dist", { recursive: true, force: true });
+  console.log("Building client with Vite...");
+  execSync("npx vite build", { stdio: "inherit" });
 
-  console.log("building client...");
-  await viteBuild();
-
-  console.log("building server...");
-  const pkg = JSON.parse(await readFile("package.json", "utf-8"));
-  const allDeps = [
-    ...Object.keys(pkg.dependencies || {}),
-    ...Object.keys(pkg.devDependencies || {}),
-  ];
-  const externals = allDeps.filter((dep) => !allowlist.includes(dep));
-
+  console.log("Building server with esbuild (ESM mode)...");
   await esbuild({
-    entryPoints: ["server/index.ts"],
-    platform: "node",
+    entryPoints: [path.resolve(__dirname, "../server/index.ts")],
     bundle: true,
-    format: "cjs",
-    outfile: "dist/index.cjs",
-    define: {
-      "process.env.NODE_ENV": '"production"',
-    },
-    minify: true,
-    external: [
-      ...externals,
-      "@replit/vite-plugin-runtime-error-overlay",
-      "@replit/vite-plugin-shadcn-theme-json",
-      "@replit/vite-plugin-cartographer",
-      "@replit/vite-plugin-dev-banner",
-      "@replit/vite-plugin-runtime-error-modal"
-    ],
-    logLevel: "info",
+    platform: "node",
+    format: "esm",
+    target: "node20",
+    outfile: path.resolve(__dirname, "../dist/index.js"),
+    packages: "external",
   });
+
+  console.log("Build complete: dist/index.js generated!");
 }
 
 buildAll().catch((err) => {
-  console.error(err);
+  console.error("Build failed:", err);
   process.exit(1);
 });
