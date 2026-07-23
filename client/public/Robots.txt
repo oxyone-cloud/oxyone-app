@@ -1,0 +1,4 @@
+User-agent: *
+Allow: /
+
+Sitemap: https://cold-app--benhamamouchoth.replit.app/sitemap.xml
