@@ -1,0 +1,77 @@
+# Documentation, politique de confidentialité et conditions d'utilisation séparées.
+#
+# Ce workflow génère un fichier de provenance SLSA Level 3 pour le projet OxyONE.
+# Conforme aux exigences : https://slsa.dev/spec/v0.1/requirements
+# Projet OpenSSF : https://github.com/slsa-framework/slsa-github-generator
+# Vérification via : https://github.com/slsa-framework/slsa-verifier
+
+name: SLSA generic generator
+
+on:
+  workflow_dispatch:
+  release:
+    types: [created]
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    outputs:
+      digests: ${{ steps.hash.outputs.digests }}
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+
+      # ========================================================
+      # Step 1: Compilation du projet Node.js / Webpack
+      # ========================================================
+      - name: Install dependencies & Build
+        run: |
+          npm ci
+          npm run build
+
+      # ========================================================
+      # Step 2: Génération des empreintes SHA256 des artefacts
+      # ========================================================
+      - name: Generate subject for provenance
+        id: hash
+        run: |
+          set -euo pipefail
+
+          # Se placer dans le dossier de sortie Webpack
+          cd dist
+          
+          # Lister les fichiers du dossier dist et calculer leurs empreintes SHA256
+          files=$(ls *)
+          
+          # Exporter les condensats encodés en base64 pour le job SLSA
+          echo "digests=$(sha256sum $files | base64 -w0)" >> "${GITHUB_OUTPUT}"
+
+      # ========================================================
+      # Step 3: Conservation des artefacts compilés
+      # ========================================================
+      - name: Upload build artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: dist-build
+          path: dist/
+
+  # ========================================================
+  # Job Isolé: Génération de la provenance SLSA 3 (OpenSSF)
+  # ========================================================
+  provenance:
+    needs: [build]
+    permissions:
+      actions: read   # Requis pour lire le chemin du workflow
+      id-token: write # Requis pour signer la provenance (Cosign/Sigstore)
+      contents: write # Requis pour attacher le fichier .intoto.jsonl à la Release
+    uses: slsa-framework/slsa-github-generator/.github/workflows/generator_generic_slsa3.yml@v2.0.0
+    with:
+      base64-subjects: "${{ needs.build.outputs.digests }}"
+      upload-assets: true # Téléverse automatiquement la provenance sur la Release GitHub
