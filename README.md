@@ -42,3 +42,7 @@ Bienvenue sur le dépôt officiel de l'application **OxyONE**, la solution digit
    ```bash
    git clone [https://github.com/oxyone-cloud/oxyone-app.git](https://github.com/oxyone-cloud/oxyone-app.git)
    cd oxyone-app
+
+
+## Déploiement GCP
+Projet géré sur Google Cloud Shell ().
