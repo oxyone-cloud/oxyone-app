@@ -57,3 +57,6 @@ Bienvenue sur le dépôt officiel de l'application **OxyONE**, la solution digit
    ```bash
    git clone [https://github.com/oxyone-cloud/oxyone-app.git](https://github.com/oxyone-cloud/oxyone-app.git)
    cd oxyone-app
+<a href="https://www.codehype.ai/product/oxyone?utm_source=codehype_badge" target="_blank" rel="noopener noreferrer">
+  <img src="https://www.codehype.ai/badges/oxyone.svg?variant=find-us&v=20" alt="Featured on CodeHype" width="180" height="65" loading="lazy" decoding="async" style="display:inline-block;border:0;width:100%;max-width:180px;height:auto;max-height:65px;" />
+</a>
